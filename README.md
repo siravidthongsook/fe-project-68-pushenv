@@ -1,1 +1,36 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ZoerMYa3)
+# Job Fair Registration Frontend
+
+Next.js + TypeScript frontend for the job fair registration backend in `../be-project-68-pushenv`.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+## Environment
+
+Create `.env.local` from `.env.example` and point `NEXT_PUBLIC_API_URL` at the Express backend.
+
+## Implemented flows
+
+- Public landing page and company catalog
+- Login and register flows
+- User dashboard for interview bookings
+- Admin dashboard for company and interview management
+
+## Backend contract
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/auth/logout`
+- `GET /api/v1/companies`
+- `GET /api/v1/companies/:id`
+- `POST /api/v1/companies/:companyId/interviews`
+- `POST /api/v1/interviews/bulk`
+- `GET /api/v1/interviews`
+- `PUT /api/v1/interviews/:id`
+- `DELETE /api/v1/interviews/:id`
+

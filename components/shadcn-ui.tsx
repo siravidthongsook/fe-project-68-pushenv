@@ -1,0 +1,270 @@
+import Link from 'next/link';
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+
+type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'danger';
+
+const cardBase =
+  'rounded-[28px] border border-zinc-200 bg-white text-zinc-950 shadow-[0_18px_48px_rgba(0,0,0,0.08)]';
+
+export function Button({
+  className,
+  variant = 'default',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+  const variantClass =
+    variant === 'secondary'
+      ? 'border border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-white'
+      : variant === 'outline'
+        ? 'border border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-white'
+        : variant === 'ghost'
+          ? 'bg-transparent text-zinc-900 hover:bg-white hover:text-zinc-700'
+          : variant === 'danger'
+            ? 'bg-rose-600 text-white hover:bg-rose-700'
+            : 'bg-zinc-900 text-white hover:bg-zinc-800';
+
+  return (
+    <button
+      className={cn(
+        'inline-flex h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50',
+        variantClass,
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function AnchorButton({
+  children,
+  href,
+  variant = 'default',
+  className,
+}: {
+  children: React.ReactNode;
+  href: string;
+  variant?: ButtonVariant;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'inline-flex h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-0',
+        variant === 'secondary'
+          ? 'border border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-white'
+          : variant === 'outline'
+            ? 'border border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-white'
+            : variant === 'ghost'
+              ? 'bg-transparent text-zinc-900 hover:bg-white hover:text-zinc-700'
+              : variant === 'danger'
+                ? 'bg-rose-600 text-white hover:bg-rose-700'
+                : 'bg-zinc-900 text-white hover:bg-zinc-800',
+        className,
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn(cardBase, className)} {...props} />;
+}
+
+export function Panel({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
+  return <section className={cn(cardBase, className)} {...props} />;
+}
+
+export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('flex flex-col space-y-2 p-6 text-center sm:p-8', className)} {...props} />;
+}
+
+export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h2 className={cn('text-3xl font-semibold text-zinc-950 sm:text-[42px]', className)} {...props} />;
+}
+
+export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn('text-sm text-zinc-500 sm:text-base', className)} {...props} />;
+}
+
+export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('px-6 pb-6 sm:px-8 sm:pb-8', className)} {...props} />;
+}
+
+export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('flex flex-col gap-3 px-6 pb-6 sm:px-8 sm:pb-8', className)} {...props} />;
+}
+
+export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
+  return <label className={cn('text-sm font-medium leading-none text-zinc-950', className)} {...props} />;
+}
+
+export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      className={cn(
+        'flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-950 outline-none transition-colors duration-200 ease-out placeholder:text-zinc-400 focus-visible:border-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      className={cn(
+        'flex min-h-[120px] w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950 outline-none transition-colors duration-200 ease-out placeholder:text-zinc-400 focus-visible:border-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Select({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      className={cn(
+        'flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-950 outline-none transition-colors duration-200 ease-out focus-visible:border-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Checkbox({
+  label,
+  checked,
+  onChange,
+  description,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  description?: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-3 transition-colors hover:border-zinc-300">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-0"
+      />
+      <span className="space-y-1">
+        <span className="block text-sm font-medium text-zinc-950">{label}</span>
+        {description ? <span className="block text-xs leading-5 text-zinc-500">{description}</span> : null}
+      </span>
+    </label>
+  );
+}
+
+export function Badge({
+  children,
+  tone = 'neutral',
+}: {
+  children: React.ReactNode;
+  tone?: 'neutral' | 'accent' | 'warm' | 'success' | 'danger';
+}) {
+  const tones: Record<string, string> = {
+    neutral: 'border border-zinc-200 bg-white text-zinc-700',
+    accent: 'border border-zinc-200 bg-white text-zinc-900',
+    warm: 'border border-zinc-200 bg-white text-zinc-900',
+    success: 'border border-zinc-200 bg-white text-zinc-900',
+    danger: 'border border-zinc-200 bg-white text-zinc-900',
+  };
+
+  return <span className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold', tones[tone])}>{children}</span>;
+}
+
+export function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="space-y-2">
+      <div className="flex items-end justify-between gap-3">
+        <span className="text-sm font-medium text-zinc-950">{label}</span>
+        {hint ? <span className="text-xs text-zinc-500">{hint}</span> : null}
+      </div>
+      {children}
+    </label>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-dashed border-zinc-200 bg-white p-6 text-center sm:p-8">
+      <h3 className="text-lg font-semibold text-zinc-950">{title}</h3>
+      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-500">{description}</p>
+      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+    </div>
+  );
+}
+
+export function StatCard({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+}) {
+  return (
+    <div className={cn(cardBase, 'p-5')}>
+      <p className="text-xs font-medium text-zinc-500">{label}</p>
+      <p className="mt-3 text-3xl font-semibold text-zinc-950">{value}</p>
+      {note ? <p className="mt-2 text-sm leading-6 text-zinc-500">{note}</p> : null}
+    </div>
+  );
+}
+
+export function Spinner({ label = 'กำลังโหลด' }: { label?: string }) {
+  return (
+    <div className="flex items-center gap-3 text-sm text-zinc-500">
+      <span className="h-3 w-3 animate-pulse rounded-full bg-zinc-900" />
+      {label}
+    </div>
+  );
+}
+
+export function PageHeading({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="max-w-3xl space-y-2">
+        {eyebrow ? <p className="text-xs font-medium text-zinc-500">{eyebrow}</p> : null}
+        <h1 className="text-3xl font-semibold text-zinc-950 sm:text-4xl">{title}</h1>
+        {description ? <p className="max-w-2xl text-sm leading-6 text-zinc-500">{description}</p> : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
