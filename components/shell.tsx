@@ -212,8 +212,25 @@ function ProtectedNav() {
             </div>
           ) : null}
 
-          {/* Burger button — unchanged */}
-          ...
+          <button
+            type="button"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-zinc-200 text-ink-600 md:hidden"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'}
+          >
+            {menuOpen ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="2" y1="2" x2="14" y2="14" />
+                <line x1="14" y1="2" x2="2" y2="14" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="2" y1="4" x2="14" y2="4" />
+                <line x1="2" y1="8" x2="14" y2="8" />
+                <line x1="2" y1="12" x2="14" y2="12" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
