@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth, useOptionalAuth } from '@/components/auth-provider';
+import { useOptionalAuth } from '@/components/auth-provider';
 import { AnchorButton, Badge, Button, EmptyState, Field, Panel, Select, Spinner } from '@/components/shadcn-ui';
 import { createInterview, getCompany } from '@/lib/api';
 import { formatDate, interviewOptions } from '@/lib/date';
@@ -18,7 +18,6 @@ export function CompanyDetail({ id }: { id: string }) {
   const [notice, setNotice] = useState<string | null>(null);
 
   const canBook = user?.role === 'user';
-  if (!auth?.token || !company) { return; } 
 
   useEffect(() => {
     let active = true;
