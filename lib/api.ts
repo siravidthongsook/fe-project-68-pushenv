@@ -26,6 +26,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function readErrorMessage(payload: unknown, fallback: string) {
+  if (typeof payload === 'string' && payload.trim()) {
+    return payload;
+  }
+
   if (!isRecord(payload)) {
     return fallback;
   }
@@ -73,10 +77,18 @@ async function request<T>(
   });
 
   const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
+  let payload: unknown = null;
+
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = text;
+    }
+  }
 
   if (!response.ok) {
-    throw new ApiError(readErrorMessage(payload, 'Request failed'), response.status);
+    throw new ApiError(readErrorMessage(payload, text || 'Request failed'), response.status);
   }
 
   return payload as T;

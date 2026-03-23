@@ -197,10 +197,10 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="space-y-8">
-        <div className="space-y-4">
-          <p className="eyebrow text-white/70">แดชบอร์ดแอดมิน</p>
-          <h1 className="font-display text-4xl text-white">จัดการบริษัทและรอบสัมภาษณ์</h1>
-          <p className="max-w-3xl text-sm leading-6 text-white/70">
+        <div className="space-y-4 text-black">
+          <p className="eyebrow">แดชบอร์ดแอดมิน</p>
+          <h1 className="font-display text-4xl">จัดการบริษัทและรอบสัมภาษณ์</h1>
+          <p className="max-w-3xl text-sm leading-6">
             หน้านี้ใช้จัดการข้อมูลบริษัทและรอบสัมภาษณ์ทั้งหมด
           </p>
         </div>
@@ -240,7 +240,7 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
               </div>
             ) : null}
 
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col gap-1">
               <Field label="ชื่อบริษัท">
                 <Input
                   value={companyForm.name}
