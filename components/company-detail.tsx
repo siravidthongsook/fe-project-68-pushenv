@@ -1,19 +1,19 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth, useOptionalAuth } from '@/components/auth-provider';
+import { useOptionalAuth } from '@/components/auth-provider';
 import { AnchorButton, Badge, Button, EmptyState, Field, Panel, Select, Spinner } from '@/components/shadcn-ui';
 import { createInterview, getCompany } from '@/lib/api';
-import { allowedInterviewOptions, formatDate } from '@/lib/date';
+import { formatDate, interviewOptions } from '@/lib/date';
 import type { Company } from '@/lib/types';
 
 export function CompanyDetail({ id }: { id: string }) {
   const auth = useOptionalAuth();
-  const { user } = useAuth();
+  const user = auth?.user ?? null;
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookingDate, setBookingDate] = useState<string>(allowedInterviewOptions()[0].value);
+  const [bookingDate, setBookingDate] = useState<string>(interviewOptions[0].value);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -88,7 +88,7 @@ export function CompanyDetail({ id }: { id: string }) {
   if (error || !company) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <EmptyState
+        <EmptyState
           title="ไม่พบบริษัท"
           description={error || 'บริษัทนี้ไม่มีอยู่หรือคุณไม่มีสิทธิ์เข้าถึง'}
           action={<AnchorButton href="/companies" variant="secondary">กลับไปรายชื่อบริษัท</AnchorButton>}
@@ -102,7 +102,7 @@ export function CompanyDetail({ id }: { id: string }) {
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Panel className="space-y-6 p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-2">
+            <div className="space-y-2">
               <p className="eyebrow">โปรไฟล์บริษัท</p>
               <h1 className="font-display text-4xl text-ink-900">{company.name}</h1>
               <p className="text-sm text-ink-500">{company.address}</p>
@@ -112,7 +112,7 @@ export function CompanyDetail({ id }: { id: string }) {
 
           <p className="text-sm leading-7 text-ink-600">{company.description}</p>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-zinc-200 bg-white p-4">
               <p className="text-xs font-medium text-ink-500">เบอร์โทรศัพท์</p>
               <p className="mt-2 text-sm font-medium text-ink-900">{company.tel}</p>
@@ -171,7 +171,7 @@ export function CompanyDetail({ id }: { id: string }) {
               <div className="space-y-4">
                 <Field label="วันที่สัมภาษณ์" hint="มีให้เลือก 4 วัน">
                   <Select value={bookingDate} onChange={(event) => setBookingDate(event.target.value)}>
-                    {allowedInterviewOptions().map((option) => (
+                    {interviewOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>

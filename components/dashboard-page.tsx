@@ -21,59 +21,36 @@ import {
   getInterviews,
   updateInterview,
 } from '@/lib/api';
-import { allowedInterviewOptions, formatDate } from '@/lib/date';
+import { formatDate, interviewOptions } from '@/lib/date';
 import type { Company, Interview } from '@/lib/types';
-import { cn } from '@/lib/utils';
-
-function interviewCompanyName(interview: Interview) {
-  return typeof interview.company === 'string' ? interview.company : interview.company.name;
-}
+import { cn, interviewCompanyName } from '@/lib/utils';
+import { useAsync } from '@/hooks/use-async';
+import { Alert } from '@/components/alert';
 
 export function DashboardPage() {
   const { user, token, refresh } = useAuth();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [interviews, setInterviews] = useState<Interview[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [bulkDate, setBulkDate] = useState<string>(allowedInterviewOptions()[0].value);
+  const [bulkDate, setBulkDate] = useState<string>(interviewOptions[0].value);
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [bookingFeedback, setBookingFeedback] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
+  const [editFeedback, setEditFeedback] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
-  const [editDate, setEditDate] = useState<string>(allowedInterviewOptions()[0].value);
+  const [editDate, setEditDate] = useState<string>(interviewOptions[0].value);
 
-  const load = useCallback(async () => {
-    if (!token) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const [nextCompanies, nextInterviews] = await Promise.all([getCompanies(token), getInterviews(token)]);
-      setCompanies(nextCompanies);
-      setInterviews(nextInterviews);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'ไม่สามารถโหลดแดชบอร์ดได้');
-    } finally {
-      setLoading(false);
-    }
+  const { data, loading, error, reload } = useAsync(async () => {
+    if (!token) return null;
+    const [companies, interviews] = await Promise.all([
+      getCompanies(token),
+      getInterviews(token),
+    ]);
+    return { companies, interviews };
   }, [token]);
 
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
-    void load();
-  }, [load, token]);
+  const companies = data?.companies ?? [];
+  const interviews = data?.interviews ?? [];
 
   const bookedCompanyIds = useMemo(
-    () =>
-      new Set(
-        interviews
-          .map((interview) => (typeof interview.company === 'string' ? interview.company : interview.company.id))
-          .filter(Boolean),
-      ),
+    () => new Set(interviews.map((interview) => interview.company.id)),
     [interviews],
   );
 
@@ -88,7 +65,7 @@ export function DashboardPage() {
     }
 
     if (selectedCompanyIds.length >= 3 && user?.role !== 'admin') {
-      setFeedback('บัญชีผู้ใช้ปกติจองได้สูงสุด 3 บริษัทต่อครั้ง');
+      setBookingFeedback({ text: 'บัญชีผู้ใช้ปกติจองได้สูงสุด 3 บริษัทต่อครั้ง', tone: 'success' });
       return;
     }
 
@@ -96,57 +73,48 @@ export function DashboardPage() {
   };
 
   const submitBulkBooking = async () => {
-    if (!token || selectedCompanyIds.length === 0) {
-      return;
-    }
-
+    if (!token || selectedCompanyIds.length === 0) return;
     setBusy(true);
-    setFeedback(null);
-
+    setBookingFeedback(null);  // ← was setFeedback(null)
     try {
       await createBulkInterviews(token, selectedCompanyIds, bulkDate);
-      setFeedback('จองหลายบริษัทเรียบร้อยแล้ว');
+      setBookingFeedback({ text: 'จองหลายบริษัทเรียบร้อยแล้ว', tone: 'success' });
       setSelectedCompanyIds([]);
-      await load();
+      await reload();
       await refresh();
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองแบบหลายบริษัทได้');
+      setBookingFeedback({ text: err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
   };
 
   const submitInterviewUpdate = async () => {
-    if (!token || !editingInterview) {
-      return;
-    }
-
+    if (!token || !editingInterview) return;
     setBusy(true);
-    setFeedback(null);
+    setEditFeedback(null);  // ← was setFeedback(null)
     try {
       await updateInterview(token, editingInterview.id, editDate);
-      setFeedback('อัปเดตรอบสัมภาษณ์แล้ว');
+      setEditFeedback({ text: 'อัปเดตรอบสัมภาษณ์แล้ว', tone: 'success' });
       setEditingInterview(null);
-      await load();
+      await reload();
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : 'ไม่สามารถอัปเดตรอบสัมภาษณ์ได้');
+      setEditFeedback({ text: err instanceof Error ? err.message : 'ไม่สามารถอัปเดตได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
   };
 
   const submitDeleteInterview = async (interviewId: string) => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
     setBusy(true);
-    setFeedback(null);
+    setEditFeedback(null);  // ← delete shares editFeedback since it's in the same panel
     try {
       await deleteInterview(token, interviewId);
-      setFeedback('ลบรอบสัมภาษณ์แล้ว');
-      await load();
+      setEditFeedback({ text: 'ลบรอบสัมภาษณ์แล้ว', tone: 'success' });
+      await reload();
     } catch (err) {
-      setFeedback(err instanceof Error ? err.message : 'ไม่สามารถลบรอบสัมภาษณ์ได้');
+      setEditFeedback({ text: err instanceof Error ? err.message : 'ไม่สามารถลบได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -208,7 +176,7 @@ export function DashboardPage() {
             <div className="space-y-4">
               <Field label="วันที่สัมภาษณ์">
                 <Select value={bulkDate} onChange={(event) => setBulkDate(event.target.value)}>
-                  {allowedInterviewOptions().map((option) => (
+                  {interviewOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -230,12 +198,14 @@ export function DashboardPage() {
                   ))}
               </div>
 
-                {companies.length === 0 ? (
+              {companies.length === 0 ? (
                 <EmptyState
                   title="ยังไม่มีรายชื่อบริษัท"
                   description="ระบบยังไม่ส่งข้อมูลบริษัทมา"
                 />
               ) : null}
+
+              {bookingFeedback && <Alert message={bookingFeedback.text} tone={bookingFeedback.tone} />}
 
               <Button
                 onClick={() => void submitBulkBooking()}
@@ -263,11 +233,7 @@ export function DashboardPage() {
                 ) : null}
               </div>
 
-              {feedback ? (
-                <div className="rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900">
-                  {feedback}
-                </div>
-              ) : null}
+              {editFeedback && <Alert message={editFeedback.text} tone={editFeedback.tone} />}
 
               {editingInterview ? (
                 <div className="space-y-3 rounded-2xl border border-accent-200 bg-accent-50 p-4">
@@ -282,7 +248,7 @@ export function DashboardPage() {
                   </div>
                   <Field label="วันที่สัมภาษณ์ใหม่">
                     <Select value={editDate} onChange={(event) => setEditDate(event.target.value)}>
-                      {allowedInterviewOptions().map((option) => (
+                      {interviewOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>

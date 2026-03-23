@@ -24,9 +24,12 @@ import {
   updateCompany,
   updateInterview,
 } from '@/lib/api';
-import { allowedInterviewOptions, formatDate } from '@/lib/date';
+import { formatDate, interviewOptions } from '@/lib/date';
 import type { Company, Interview } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn, interviewCompanyName } from '@/lib/utils';
+import { useAsync } from '@/hooks/use-async';
+import { Alert } from '@/components/alert';
+import { DeleteButton } from '@/components/delete-button';
 
 type CompanyForm = {
   name: string;
@@ -44,50 +47,29 @@ const emptyCompanyForm: CompanyForm = {
   tel: '',
 };
 
-function interviewCompanyName(interview: Interview) {
-  return typeof interview.company === 'string' ? interview.company : interview.company.name;
-}
-
 export function AdminPage() {
   const { token, refresh } = useAuth();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [interviews, setInterviews] = useState<Interview[]>([]);
-  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
   const [companyForm, setCompanyForm] = useState<CompanyForm>(emptyCompanyForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
-  const [interviewDate, setInterviewDate] = useState<string>(allowedInterviewOptions()[0].value);
+const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].value);
 
-  const load = useCallback(async () => {
-    if (!token) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const [nextCompanies, nextInterviews] = await Promise.all([getCompanies(token), getInterviews(token)]);
-      setCompanies(nextCompanies);
-      setInterviews(nextInterviews);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'ไม่สามารถโหลดข้อมูลแอดมินได้');
-    } finally {
-      setLoading(false);
-    }
+  const { data, loading, error, reload } = useAsync(async () => {
+    if (!token) return null;
+    const [companies, interviews] = await Promise.all([
+      getCompanies(token),
+      getInterviews(token),
+    ]);
+    return { companies, interviews };
   }, [token]);
 
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
-    void load();
-  }, [load, token]);
+  const companies = data?.companies ?? [];
+  const interviews = data?.interviews ?? [];
 
-  const companyStats = useMemo(() => companies.length.toString(), [companies.length]);
-  const interviewStats = useMemo(() => interviews.length.toString(), [interviews.length]);
+  const companyStats = companies.length.toString();
+  const interviewStats = interviews.length.toString();
 
   const saveCompany = async () => {
     if (!token) {
@@ -107,18 +89,18 @@ export function AdminPage() {
 
       if (editingCompanyId) {
         await updateCompany(token, editingCompanyId, payload);
-        setMessage('อัปเดตบริษัทแล้ว');
+        setMessage({ text: 'อัปเดตบริษัทแล้ว', tone: 'success' });
       } else {
         await createCompany(token, payload);
-        setMessage('สร้างบริษัทแล้ว');
+        setMessage({ text: 'สร้างบริษัทแล้ว', tone: 'success' });
       }
 
       setCompanyForm(emptyCompanyForm);
       setEditingCompanyId(null);
-      await load();
+      await reload();
       await refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'ไม่สามารถบันทึกบริษัทได้');
+      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถบันทึกได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -144,11 +126,11 @@ export function AdminPage() {
     setMessage(null);
     try {
       await deleteCompany(token, companyId);
-      setMessage('ลบบริษัทแล้ว');
-      await load();
+      setMessage({ text: 'ลบบริษัทแล้ว', tone: 'success' });
+      await reload();
       await refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'ไม่สามารถลบบริษัทได้');
+      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถลบบริษัทได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -162,11 +144,11 @@ export function AdminPage() {
     setMessage(null);
     try {
       await updateInterview(token, selectedInterview.id, interviewDate);
-      setMessage('อัปเดตรอบสัมภาษณ์แล้ว');
+      setMessage({ text: 'อัปเดตรอบสัมภาษณ์แล้ว', tone: 'success' });
       setSelectedInterview(null);
-      await load();
+      await reload();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'ไม่สามารถอัปเดตรอบสัมภาษณ์ได้');
+      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถอัปเดตรอบสัมภาษณ์ได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -181,10 +163,10 @@ export function AdminPage() {
     setMessage(null);
     try {
       await deleteInterview(token, interviewId);
-      setMessage('ลบรอบสัมภาษณ์แล้ว');
-      await load();
+      setMessage({ text: 'ลบรอบสัมภาษณ์แล้ว', tone: 'success' });
+      await reload();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'ไม่สามารถลบรอบสัมภาษณ์ได้');
+      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถลบรอบสัมภาษณ์ได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -254,7 +236,7 @@ export function AdminPage() {
 
             {message ? (
               <div className="rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900">
-                {message}
+                {message ? <Alert message={message.text} tone={message.tone} /> : null}
               </div>
             ) : null}
 
@@ -322,9 +304,9 @@ export function AdminPage() {
                 />
               ) : (
                 <div className="space-y-3">
-              {companies.map((company) => (
-                <div key={company.id} className="rounded-2xl border border-ink-200 bg-white p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  {companies.map((company) => (
+                    <div key={company.id} className="rounded-2xl border border-ink-200 bg-white p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <p className="font-medium text-ink-900">{company.name}</p>
                           <p className="mt-1 text-sm text-ink-500">{company.address}</p>
@@ -337,9 +319,7 @@ export function AdminPage() {
                           <Button type="button" variant="outline" onClick={() => editCompany(company)}>
                             แก้ไข
                           </Button>
-                          <Button variant="danger" onClick={() => void removeCompany(company.id)} disabled={busy}>
-                            ลบ
-                          </Button>
+                          <DeleteButton onConfirm={() => void removeCompany(company.id)} disabled={busy} />
                         </div>
                       </div>
                     </div>
@@ -373,7 +353,7 @@ export function AdminPage() {
                       value={interviewDate}
                       onChange={(event) => setInterviewDate(event.target.value)}
                     >
-                      {allowedInterviewOptions().map((option) => (
+                      {interviewOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -397,7 +377,7 @@ export function AdminPage() {
                           <p className="font-medium text-ink-900">{interviewCompanyName(interview)}</p>
                           <p className="text-sm text-ink-500">{formatDate(interview.date)}</p>
                           <p className="mt-1 text-xs font-medium text-ink-400">
-                            {typeof interview.user === 'string' ? interview.user : interview.user.email}
+                            {interview.user.email}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -405,15 +385,13 @@ export function AdminPage() {
                             type="button"
                             variant="outline"
                             onClick={() => {
-                            setSelectedInterview(interview);
-                            setInterviewDate(new Date(interview.date).toISOString());
-                          }}
-                        >
+                              setSelectedInterview(interview);
+                              setInterviewDate(new Date(interview.date).toISOString());
+                            }}
+                          >
                             แก้ไข
                           </Button>
-                          <Button variant="danger" onClick={() => void removeInterview(interview.id)} disabled={busy}>
-                            ลบ
-                          </Button>
+                          <DeleteButton onConfirm={() => void removeInterview(interview.id)} disabled={busy} />
                         </div>
                       </div>
                     </div>

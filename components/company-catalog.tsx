@@ -5,6 +5,7 @@ import { useOptionalAuth } from '@/components/auth-provider';
 import { AnchorButton, Badge, EmptyState, Input, Panel, Spinner } from '@/components/shadcn-ui';
 import { getCompanies } from '@/lib/api';
 import type { Company } from '@/lib/types';
+import { useDebounce } from '@/hooks/use-debounce';
 
 function CompanyCard({ company }: { company: Company }) {
   return (
@@ -45,6 +46,8 @@ export function CompanyCatalog() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 250);
+
 
   useEffect(() => {
     let active = true;
@@ -76,17 +79,17 @@ export function CompanyCatalog() {
   }, [auth?.token]);
 
   const filtered = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) {
-      return companies;
-    }
+    const term = debouncedQuery.trim().toLowerCase();
+    if (!term) return companies;
     return companies.filter((company) =>
       [company.name, company.address, company.description, company.tel]
         .join(' ')
         .toLowerCase()
         .includes(term),
     );
-  }, [companies, query]);
+  }, [companies, debouncedQuery]);
+
+  const isDebouncing = query !== debouncedQuery;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -109,11 +112,19 @@ export function CompanyCatalog() {
         </div>
 
         <Panel className="p-4 sm:p-5">
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="ค้นหาจากชื่อ ที่อยู่ หรือเบอร์โทร"
-          />
+          <div className="relative">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ค้นหาจากชื่อ ที่อยู่ หรือเบอร์โทร"
+              className={isDebouncing ? 'pr-24' : undefined}
+            />
+            {isDebouncing && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-400">
+                กำลังค้นหา...
+              </span>
+            )}
+          </div>
         </Panel>
 
         {loading ? (

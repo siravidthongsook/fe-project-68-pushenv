@@ -103,8 +103,13 @@ function normalizeCompanySummary(raw: Record<string, unknown>): CompanySummary {
 }
 
 export function normalizeInterview(raw: Record<string, unknown>): Interview {
-  const company = isRecord(raw.company) ? normalizeCompanySummary(raw.company) : String(raw.company ?? '');
-  const user = isRecord(raw.user) ? normalizeUser(raw.user) : String(raw.user ?? '');
+  const company = isRecord(raw.company)
+    ? normalizeCompanySummary(raw.company)
+    : { id: String(raw.company ?? ''), name: String(raw.company ?? ''), address: '', tel: '' };
+
+  const user = isRecord(raw.user)
+    ? normalizeUser(raw.user)
+    : { id: String(raw.user ?? ''), name: '', telephone: '', email: String(raw.user ?? ''), role: 'user' as Role };
 
   return {
     id: String(raw._id ?? raw.id ?? ''),
@@ -118,8 +123,8 @@ export function normalizeInterview(raw: Record<string, unknown>): Interview {
 export function normalizeCompany(raw: Record<string, unknown>): Company {
   const interviews = Array.isArray(raw.interview)
     ? raw.interview
-        .filter(isRecord)
-        .map((item) => normalizeInterview(item))
+      .filter(isRecord)
+      .map((item) => normalizeInterview(item))
     : [];
 
   return {
@@ -142,11 +147,20 @@ function extractData<T>(payload: ApiEnvelope<T> | { success?: boolean; data?: T 
   return payload.data as T;
 }
 
+/**
+ * Fetch the currently authenticated user's profile.
+ * @throws {ApiError} if the token is invalid or expired
+ */
 export async function getMe(token: string) {
   const payload = await request<ApiEnvelope<Record<string, unknown>>>('/api/v1/auth/me', { token });
   return normalizeUser(extractData(payload));
 }
 
+/**
+ * Authenticate with email and password.
+ * @returns JWT token string on success
+ * @throws {ApiError} on invalid credentials
+ */
 export async function loginUser(email: string, password: string) {
   const payload = await request<AuthResponse>('/api/v1/auth/login', {
     method: 'POST',
@@ -155,6 +169,11 @@ export async function loginUser(email: string, password: string) {
   return payload.token;
 }
 
+/**
+ * Register a new user account. Role is always set to 'user'.
+ * @returns JWT token string on success
+ * @throws {ApiError} if email is already taken
+ */
 export async function registerUser(data: {
   name: string;
   telephone: string;
@@ -169,13 +188,24 @@ export async function registerUser(data: {
   return payload.token;
 }
 
+/**
+ * Invalidate the current session on the backend.
+ * @throws {ApiError} on failure — caller should clear local state regardless
+ */
 export async function logoutUser(token: string) {
+  // NOTE: Backend currently only accepts GET for logout.
+  // This is a known limitation — ideally should be POST to prevent CSRF.
+  // Update to POST when the backend route is changed
   await request<ApiEnvelope<Record<string, never>>>('/api/v1/auth/logout', {
     token,
     method: 'GET',
   });
 }
 
+/**
+ * Fetch all companies. Passes token if provided for role-specific data.
+ * @throws {ApiError} on non-2xx responses
+ */
 export async function getCompanies(token?: string | null) {
   const payload = await request<{ success: boolean; count: number; data: Record<string, unknown>[] }>(
     '/api/v1/companies',
@@ -184,6 +214,10 @@ export async function getCompanies(token?: string | null) {
   return payload.data.map((company) => normalizeCompany(company));
 }
 
+/**
+ * Fetch a single company by ID including its interview bookings.
+ * @throws {ApiError} if company not found
+ */
 export async function getCompany(id: string, token?: string | null) {
   const payload = await request<ApiEnvelope<Record<string, unknown>>>(
     `/api/v1/companies/${id}`,
@@ -192,6 +226,10 @@ export async function getCompany(id: string, token?: string | null) {
   return normalizeCompany(extractData(payload));
 }
 
+/**
+ * Create a new company. Requires admin token.
+ * @throws {ApiError} if unauthorized or validation fails
+ */
 export async function createCompany(
   token: string,
   data: {
@@ -210,6 +248,10 @@ export async function createCompany(
   return normalizeCompany(extractData(payload));
 }
 
+/**
+ * Update an existing company by ID. Requires admin token.
+ * @throws {ApiError} if unauthorized or company not found
+ */
 export async function updateCompany(
   token: string,
   id: string,
@@ -229,6 +271,10 @@ export async function updateCompany(
   return normalizeCompany(extractData(payload));
 }
 
+/**
+ * Delete a company by ID. Requires admin token.
+ * @throws {ApiError} if unauthorized or company not found
+ */
 export async function deleteCompany(token: string, id: string) {
   await request<ApiEnvelope<Record<string, never>>>(`/api/v1/companies/${id}`, {
     method: 'DELETE',
@@ -236,6 +282,11 @@ export async function deleteCompany(token: string, id: string) {
   });
 }
 
+/**
+ * Fetch all interviews visible to the current user.
+ * Admins see all interviews, regular users see only their own.
+ * @throws {ApiError} if token is missing or invalid
+ */
 export async function getInterviews(token: string) {
   const payload = await request<{ success: boolean; count: number; data: Record<string, unknown>[] }>(
     '/api/v1/interviews',
@@ -244,6 +295,10 @@ export async function getInterviews(token: string) {
   return payload.data.map((interview) => normalizeInterview(interview));
 }
 
+/**
+ * Book a single interview slot at a specific company.
+ * @throws {ApiError} if user already has 3 bookings or slot is taken
+ */
 export async function getInterview(token: string, id: string) {
   const payload = await request<ApiEnvelope<Record<string, unknown>>>(`/api/v1/interviews/${id}`, {
     token,
@@ -251,6 +306,10 @@ export async function getInterview(token: string, id: string) {
   return normalizeInterview(extractData(payload));
 }
 
+/**
+ * Book interview slots at multiple companies in one request.
+ * @throws {ApiError} if booking limit would be exceeded
+ */
 export async function createInterview(token: string, companyId: string, date: string) {
   const payload = await request<ApiEnvelope<Record<string, unknown>>>(
     `/api/v1/companies/${companyId}/interviews`,
@@ -263,6 +322,10 @@ export async function createInterview(token: string, companyId: string, date: st
   return normalizeInterview(extractData(payload));
 }
 
+/**
+ * Reschedule an existing interview to a new date.
+ * @throws {ApiError} if interview not found or unauthorized
+ */
 export async function createBulkInterviews(token: string, companyIds: string[], date: string) {
   const payload = await request<{ success: boolean; count: number; data: Record<string, unknown>[] }>(
     '/api/v1/interviews/bulk',
@@ -275,6 +338,10 @@ export async function createBulkInterviews(token: string, companyIds: string[], 
   return payload.data.map((interview) => normalizeInterview(interview));
 }
 
+/**
+ * Cancel and delete an interview booking.
+ * @throws {ApiError} if interview not found or unauthorized
+ */
 export async function updateInterview(token: string, interviewId: string, date: string) {
   const payload = await request<ApiEnvelope<Record<string, unknown>>>(`/api/v1/interviews/${interviewId}`, {
     method: 'PUT',

@@ -102,9 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     telephone: string;
     email: string;
     password: string;
-    role: Role;
   }) => {
-    const nextToken = await registerUser(data);
+    const nextToken = await registerUser({ ...data, role: 'user' });
     storeToken(nextToken);
     const nextUser = await hydrate(nextToken);
     if (!nextUser) {

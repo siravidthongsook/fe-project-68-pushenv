@@ -30,8 +30,8 @@ export interface Company {
 export interface Interview {
   id: string;
   date: string;
-  user: string | User;
-  company: string | CompanySummary;
+  user: User;
+  company: CompanySummary;
   createdAt?: string;
 }
 

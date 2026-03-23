@@ -29,7 +29,6 @@ export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextP
   const router = useRouter();
   const auth = useAuth();
   const [form, setForm] = useState(initialState);
-  const [role, setRole] = useState<Role>('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,12 +47,12 @@ export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextP
     try {
       const user = isRegister
         ? await auth.register({
-            name: form.name.trim(),
-            telephone: form.telephone.trim(),
-            email: form.email.trim(),
-            password: form.password,
-            role,
-          })
+          name: form.name.trim(),
+          telephone: form.telephone.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          role: 'user',  // ✅ always user
+        })
         : await auth.login(form.email.trim(), form.password);
 
       const destination = nextPath || (user.role === 'admin' ? '/admin' : '/dashboard');
@@ -134,19 +133,6 @@ export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextP
                 required
               />
             </div>
-
-            {isRegister ? (
-              <div className="grid gap-2.5">
-                <div className="flex items-end justify-between gap-3">
-                  <Label htmlFor="auth-role">บทบาทบัญชี</Label>
-                  <span className="text-[11px] text-zinc-500">ค่าเริ่มต้นคือผู้ใช้</span>
-                </div>
-                <Select id="auth-role" value={role} onChange={(event) => setRole(event.target.value as Role)}>
-                  <option value="user">ผู้ใช้</option>
-                  <option value="admin">ผู้ดูแลระบบ</option>
-                </Select>
-              </div>
-            ) : null}
 
             <Button
               type="submit"
