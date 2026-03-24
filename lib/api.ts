@@ -2,6 +2,7 @@ import { API_BASE_URL } from '@/lib/constants';
 import type {
   ApiEnvelope,
   AuthResponse,
+  BookingSlot,
   Company,
   Interview,
   CompanySummary,
@@ -101,7 +102,15 @@ function normalizeUser(raw: Record<string, unknown>): User {
     telephone: String(raw.telephone ?? ''),
     email: String(raw.email ?? ''),
     role: (raw.role as Role) ?? 'user',
+    bookingCount: Number(raw.bookingCount ?? 0),
     createdAt: raw.createdAt ? String(raw.createdAt) : undefined,
+  };
+}
+
+function normalizeBookingSlot(raw: Record<string, unknown>): BookingSlot {
+  return {
+    value: String(raw.value ?? raw.date ?? ''),
+    label: String(raw.label ?? raw.value ?? raw.date ?? ''),
   };
 }
 
@@ -121,7 +130,14 @@ export function normalizeInterview(raw: Record<string, unknown>): Interview {
 
   const user = isRecord(raw.user)
     ? normalizeUser(raw.user)
-    : { id: String(raw.user ?? ''), name: '', telephone: '', email: String(raw.user ?? ''), role: 'user' as Role };
+    : {
+        id: String(raw.user ?? ''),
+        name: '',
+        telephone: '',
+        email: String(raw.user ?? ''),
+        role: 'user' as Role,
+        bookingCount: 0,
+      };
 
   return {
     id: String(raw._id ?? raw.id ?? ''),
@@ -236,6 +252,36 @@ export async function getUsers(token: string) {
     { token },
   );
   return payload.data.map((user) => normalizeUser(user));
+}
+
+export async function updateUser(
+  token: string,
+  id: string,
+  data: {
+    role: Role;
+  },
+) {
+  const payload = await request<ApiEnvelope<Record<string, unknown>>>(`/api/v1/users/${id}`, {
+    method: 'PUT',
+    token,
+    body: data,
+  });
+  return normalizeUser(extractData(payload));
+}
+
+export async function deleteUser(token: string, id: string) {
+  await request<ApiEnvelope<Record<string, never>>>(`/api/v1/users/${id}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
+export async function getInterviewSlots(token: string) {
+  const payload = await request<{ success: boolean; count: number; data: Record<string, unknown>[] }>(
+    '/api/v1/interviews/slots',
+    { token },
+  );
+  return payload.data.map((slot) => normalizeBookingSlot(slot));
 }
 
 /**

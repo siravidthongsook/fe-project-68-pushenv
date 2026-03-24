@@ -6,7 +6,13 @@ export interface User {
   telephone: string;
   email: string;
   role: Role;
+  bookingCount: number;
   createdAt?: string;
+}
+
+export interface BookingSlot {
+  value: string;
+  label: string;
 }
 
 export interface CompanySummary {

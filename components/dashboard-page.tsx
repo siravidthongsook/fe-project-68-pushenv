@@ -19,6 +19,7 @@ import {
   deleteInterview,
   getCompanies,
   getInterviews,
+  getInterviewSlots,
   updateInterview,
 } from '@/lib/api';
 import { formatDate, interviewOptions } from '@/lib/date';
@@ -42,15 +43,29 @@ export function DashboardPage() {
 
   const { data, loading, error, reload } = useAsync(async () => {
     if (!token) return null;
-    const [companies, interviews] = await Promise.all([
+    const [companies, interviews, bookingSlots] = await Promise.all([
       getCompanies(token),
       getInterviews(token),
+      getInterviewSlots(token).catch(() => [...interviewOptions]),
     ]);
-    return { companies, interviews };
+    return { companies, interviews, bookingSlots };
   }, [token]);
 
   const companies = data?.companies ?? EMPTY_COMPANIES;
   const interviews = data?.interviews ?? EMPTY_INTERVIEWS;
+  const bookingSlots = data?.bookingSlots ?? interviewOptions;
+
+  useEffect(() => {
+    if (!bookingSlots.some((slot) => slot.value === bulkDate)) {
+      setBulkDate(bookingSlots[0]?.value ?? '');
+    }
+  }, [bookingSlots, bulkDate]);
+
+  useEffect(() => {
+    if (!bookingSlots.some((slot) => slot.value === editDate)) {
+      setEditDate(bookingSlots[0]?.value ?? '');
+    }
+  }, [bookingSlots, editDate]);
 
   const bookedCompanyIds = useMemo(
     () => new Set(interviews.map((interview) => interview.company.id)),
@@ -179,7 +194,7 @@ export function DashboardPage() {
             <div className="space-y-4">
               <Field label="วันที่สัมภาษณ์">
                 <Select value={bulkDate} onChange={(event) => setBulkDate(event.target.value)}>
-                  {interviewOptions.map((option) => (
+                  {bookingSlots.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -251,7 +266,7 @@ export function DashboardPage() {
                   </div>
                   <Field label="วันที่สัมภาษณ์ใหม่">
                     <Select value={editDate} onChange={(event) => setEditDate(event.target.value)}>
-                      {interviewOptions.map((option) => (
+                      {bookingSlots.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
