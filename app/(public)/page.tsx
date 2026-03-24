@@ -6,12 +6,12 @@ export default function LandingPage() {
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
         <div className="space-y-8">
           <div className="space-y-4">
-            <Badge tone="accent">ระบบจองสัมภาษณ์สำหรับนักศึกษาและสถานประกอบการ</Badge>
+            <Badge tone="accent">ระบบจองสัมภาษณ์สำหรับนักศึกษา</Badge>
             <h1 className="max-w-3xl font-display text-5xl font-semibold leading-[1.24] text-ink-900 sm:text-6xl sm:leading-[1.24]">
-              จองสัมภาษณ์ได้อย่างเป็นระบบ เพื่อการใช้งานที่ชัดเจนและเชื่อถือได้
+              จองสัมภาษณ์ได้อย่างเป็นระบบ เพื่อการใช้งานที่ชัดเจน
             </h1>
             <p className="max-w-2xl text-base leading-7 text-ink-600 sm:text-lg">
-              ออกแบบให้ทั้งนักศึกษาและสถานประกอบการใช้งานได้อย่างสะดวก ติดตามรายการจองได้ง่าย และจัดการทุกขั้นตอนในที่เดียว
+              ออกแบบให้ทั้งนักศึกษา ติดตามรายการจองได้ง่าย และจัดการทุกขั้นตอนในที่เดียว
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export default function LandingPage() {
             <div className="flex flex-1 flex-col justify-between gap-4 p-6">
               {[
                 ['สำหรับนักศึกษา', 'ค้นหาบริษัท จองสัมภาษณ์ และติดตามรายการจองได้ในหน้าเดียว'],
-                ['สำหรับสถานประกอบการ', 'จัดการรอบสัมภาษณ์และตรวจสอบข้อมูลได้อย่างเป็นระเบียบ'],
+                ['สำหรับสถานประกอบการ', 'รับข้อมูลการจองจากนักศึกษาอย่างเป็นระบบและจัดการได้ง่าย'],
                 ['ความน่าเชื่อถือ', 'เก็บข้อมูลและสถานะการจองไว้ในระบบเดียวเพื่อความมั่นใจ'],
               ].map(([title, desc]) => (
                 <div key={title} className="rounded-2xl border border-ink-200 bg-white px-4 py-4">

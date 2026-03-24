@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { AuthForm } from '@/components/auth-forms';
 
 export const metadata: Metadata = {
-  title: 'ลงทะเบียน | ระบบลงทะเบียนงานแฟร์',
-  description: 'หน้าลงทะเบียนสำหรับระบบลงทะเบียนงานแฟร์',
+  title: 'ลงทะเบียน | ระบบลงทะเบียนงาน Job Fair',
+  description: 'หน้าลงทะเบียนสำหรับระบบลงทะเบียนงาน Job Fair',
 };
 
 export default async function RegisterPage({

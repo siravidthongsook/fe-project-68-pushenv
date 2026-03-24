@@ -97,7 +97,7 @@ export function CompanyCatalog() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <p className="eyebrow">รายชื่อบริษัท</p>
-            <h1 className="font-display text-4xl text-ink-900">บริษัทที่เข้าร่วมงานแฟร์</h1>
+            <h1 className="font-display text-4xl text-ink-900">บริษัทที่เข้าร่วมงาน Job Fair</h1>
             <p className="max-w-3xl text-sm leading-6 text-ink-600">
               ค้นหาและดูข้อมูลบริษัทก่อนเข้าสู่ขั้นตอนจองสัมภาษณ์
             </p>

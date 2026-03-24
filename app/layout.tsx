@@ -15,8 +15,8 @@ const thai = IBM_Plex_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: 'ระบบลงทะเบียนงานแฟร์',
-  description: 'ระบบค้นหาบริษัท จองสัมภาษณ์ และจัดการข้อมูลสำหรับงานแฟร์',
+  title: 'ระบบลงทะเบียนงาน Job Fair',
+  description: 'ระบบค้นหาบริษัท จองสัมภาษณ์ และจัดการข้อมูลสำหรับงาน Job Fair',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
