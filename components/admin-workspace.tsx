@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
 import { Alert } from '@/components/alert';
 import { DeleteButton } from '@/components/delete-button';
+import { SearchSelectField } from '@/components/search-select-picker';
 import {
   AnchorButton,
   Badge,
@@ -86,6 +87,10 @@ function userDisplayName(user: User) {
   return user.name || user.email;
 }
 
+function userSelectionSummary(user: User) {
+  return `${userDisplayName(user)} • ${user.email}`;
+}
+
 function SectionTabs({
   activeSection,
   onChange,
@@ -163,7 +168,7 @@ function SideSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 !mt-0">
       <button
         type="button"
         aria-label="ปิดหน้าต่าง"
@@ -197,7 +202,7 @@ function DataTable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-[28px] border border-zinc-200 bg-white shadow-[0_18px_48px_rgba(0,0,0,0.08)]">
+    <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_18px_48px_rgba(0,0,0,0.08)]">
       <table className="min-w-full divide-y divide-zinc-200 text-sm">
         <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
           <tr>
@@ -242,12 +247,16 @@ function BookingsSection({
   const [createUserId, setCreateUserId] = useState('');
   const [createCompanyId, setCreateCompanyId] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const bookableUsers = useMemo(
+    () => users.filter((user) => user.role === 'user'),
+    [users],
+  );
 
   useEffect(() => {
-    if (!users.some((user) => user.id === createUserId)) {
-      setCreateUserId(users[0]?.id ?? '');
+    if (!bookableUsers.some((user) => user.id === createUserId)) {
+      setCreateUserId(bookableUsers[0]?.id ?? '');
     }
-  }, [createUserId, users]);
+  }, [bookableUsers, createUserId]);
 
   useEffect(() => {
     if (!companies.some((company) => company.id === createCompanyId)) {
@@ -545,41 +554,99 @@ function BookingsSection({
 
         {mode === 'create' ? (
           <div className="space-y-5">
-            <Field label="ผู้ใช้">
-              <Select value={createUserId} onChange={(event) => setCreateUserId(event.target.value)}>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {userDisplayName(user)} • {user.email}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="บริษัท">
-              <Select value={createCompanyId} onChange={(event) => setCreateCompanyId(event.target.value)}>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name} • {company.address}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="ช่วงเวลาสัมภาษณ์">
-              <Select value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)}>
-                {bookingSlots.map((slot) => (
-                  <option key={slot.value} value={slot.value}>
-                    {slot.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Button
-              type="button"
-              className="w-full"
-              onClick={() => void submitBooking()}
-              disabled={submitting || !createUserId || !createCompanyId || !selectedDate}
-            >
-              {submitting ? 'กำลังสร้าง...' : 'ยืนยันการจอง'}
-            </Button>
+            <div>
+              <Field label="ผู้ใช้">
+                <SearchSelectField
+                  title="เลือกผู้ใช้สำหรับการจอง"
+                  description="แสดงเฉพาะบัญชีผู้ใช้ปกติที่พร้อมรับการจอง"
+                  items={bookableUsers}
+                  selectedId={createUserId}
+                  placeholder="ค้นหาและเลือกผู้ใช้"
+                  searchPlaceholder="ค้นหาจากชื่อ อีเมล หรือเบอร์โทร"
+                  emptyTitle="ไม่พบผู้ใช้ที่ตรงคำค้นหา"
+                  emptyDescription="ลองค้นหาด้วยชื่อ อีเมล หรือเบอร์โทรอื่น"
+                  getId={(user) => user.id}
+                  getSearchText={(user) => [user.name, user.email, user.telephone].join(' ')}
+                  renderSelection={(user) => (
+                    <div className="space-y-1">
+                      <p className="truncate text-sm font-semibold text-zinc-950">{userSelectionSummary(user)}</p>
+                      <p className="text-xs text-zinc-500">{user.bookingCount} การจอง • {user.telephone || 'ไม่มีเบอร์โทร'}</p>
+                    </div>
+                  )}
+                  renderItem={(user, state) => (
+                    <div className="space-y-1">
+                      <p className={cn('truncate text-sm font-semibold', state.active || state.selected ? 'text-white' : 'text-zinc-950')}>
+                        {userSelectionSummary(user)}
+                      </p>
+                      <p className={cn('text-xs', state.active || state.selected ? 'text-white/80' : 'text-zinc-500')}>
+                        {user.telephone || 'ไม่มีเบอร์โทร'} • {user.bookingCount} การจอง
+                      </p>
+                    </div>
+                  )}
+                  onSelect={(user) => setCreateUserId(user.id)}
+                  disabled={bookableUsers.length === 0}
+                />
+              </Field>
+            </div>
+            <div>
+              <Field label="บริษัท">
+                <SearchSelectField
+                  title="เลือกบริษัทสำหรับการจอง"
+                  description="ค้นหาบริษัทจากชื่อ ที่อยู่ หรือเบอร์โทร"
+                  items={companies}
+                  selectedId={createCompanyId}
+                  placeholder="ค้นหาและเลือกบริษัท"
+                  searchPlaceholder="ค้นหาจากชื่อบริษัท ที่อยู่ หรือเบอร์โทร"
+                  emptyTitle="ไม่พบบริษัทที่ตรงคำค้นหา"
+                  emptyDescription="ลองค้นหาด้วยชื่อบริษัทหรือข้อมูลติดต่ออื่น"
+                  getId={(company) => company.id}
+                  getSearchText={(company) => [company.name, company.address, company.tel].join(' ')}
+                  renderSelection={(company) => (
+                    <div className="space-y-1">
+                      <p className="truncate text-sm font-semibold text-zinc-950">{company.name}</p>
+                      <p className="truncate text-xs text-zinc-500">{company.address} • {company.bookingCount} การจอง</p>
+                    </div>
+                  )}
+                  renderItem={(company, state) => (
+                    <div className="space-y-1">
+                      <p className={cn('truncate text-sm font-semibold', state.active || state.selected ? 'text-white' : 'text-zinc-950')}>
+                        {company.name}
+                      </p>
+                      <p className={cn('truncate text-xs', state.active || state.selected ? 'text-white/80' : 'text-zinc-500')}>
+                        {company.address} • {company.tel} • {company.bookingCount} การจอง
+                      </p>
+                    </div>
+                  )}
+                  onSelect={(company) => setCreateCompanyId(company.id)}
+                  disabled={companies.length === 0}
+                />
+              </Field>
+            </div>
+            <div>
+
+              <Field label="ช่วงเวลาสัมภาษณ์">
+                <Select value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)}>
+                  {bookingSlots.map((slot) => (
+                    <option key={slot.value} value={slot.value}>
+                      {slot.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Button
+                type="button"
+                className="w-full mt-8"
+                onClick={() => void submitBooking()}
+                disabled={submitting || !createUserId || !createCompanyId || !selectedDate}
+              >
+                {submitting ? 'กำลังสร้าง...' : 'ยืนยันการจอง'}
+              </Button>
+              {bookableUsers.length === 0 ? (
+                <p className="text-sm text-amber-700">
+                  ยังไม่มีบัญชีผู้ใช้ปกติให้เลือก ระบบจะไม่แสดงบัญชีแอดมินในตัวเลือกนี้
+                </p>
+              ) : null}
+            </div>
           </div>
         ) : null}
 

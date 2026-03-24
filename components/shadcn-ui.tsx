@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'danger';
 
 const cardBase =
-  'rounded-[28px] border border-zinc-200 bg-white text-zinc-950 shadow-[0_18px_48px_rgba(0,0,0,0.08)]';
+  'rounded-2xl border border-zinc-200 bg-white text-zinc-950 shadow-[0_18px_48px_rgba(0,0,0,0.08)]';
 
 export function Button({
   className,
@@ -112,17 +112,20 @@ export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLab
   return <label className={cn('text-sm font-medium leading-none text-zinc-950', className)} {...props} />;
 }
 
-export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={cn(
-        'flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-950 outline-none transition-colors duration-200 ease-out placeholder:text-zinc-400 focus-visible:border-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none',
-        className,
-      )}
-      {...props}
-    />
-  );
-}
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  function Input({ className, ...props }, ref) {
+    return (
+      <input
+        ref={ref}
+        className={cn(
+          'flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-950 outline-none transition-colors duration-200 ease-out placeholder:text-zinc-400 focus-visible:border-zinc-900 focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none',
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
 
 export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
@@ -209,7 +212,7 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="space-y-2">
+    <label className="space-y-3">
       <div className="flex items-end justify-between gap-3">
         <span className="text-sm font-medium text-zinc-950">{label}</span>
         {hint ? <span className="text-xs text-zinc-500">{hint}</span> : null}
