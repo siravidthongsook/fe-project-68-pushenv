@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
+import { useToast } from '@/components/toast-provider';
 import {
   Button,
   Card,
@@ -28,9 +29,9 @@ const initialState = {
 export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextPath?: string }) {
   const router = useRouter();
   const auth = useAuth();
+  const toast = useToast();
   const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const isRegister = mode === 'register';
 
@@ -42,7 +43,6 @@ export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextP
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       const user = isRegister
@@ -55,11 +55,12 @@ export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextP
         })
         : await auth.login(form.email.trim(), form.password);
 
+      toast.success(isRegister ? 'สร้างบัญชีเรียบร้อยแล้ว' : 'เข้าสู่ระบบสำเร็จ');
       const destination = nextPath || (user.role === 'admin' ? '/admin' : '/dashboard');
       router.push(destination);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'ไม่สามารถยืนยันตัวตนได้');
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถยืนยันตัวตนได้');
     } finally {
       setLoading(false);
     }
@@ -77,12 +78,6 @@ export function AuthForm({ mode, nextPath }: { mode: 'login' | 'register'; nextP
 
         <CardContent className="px-4 pb-6 sm:px-6 sm:pb-8">
           <form className="space-y-4" onSubmit={submit}>
-            {error ? (
-              <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-950 sm:text-sm">
-                {isRegister ? 'ไม่สามารถสร้างบัญชีได้' : 'ไม่สามารถเข้าสู่ระบบได้'}
-              </div>
-            ) : null}
-
             {isRegister ? (
               <>
                 <div className="grid gap-2.5">

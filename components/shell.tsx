@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AuthProvider, useOptionalAuth } from '@/components/auth-provider';
+import { ToastProvider, useToast } from '@/components/toast-provider';
 import { Button, AnchorButton, Badge } from '@/components/shadcn-ui';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -46,6 +47,7 @@ function getShellMode(pathname: string | null) {
 
 function AppNav({ allowGuestActions }: { allowGuestActions: boolean }) {
   const auth = useOptionalAuth();
+  const toast = useToast();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const currentUser = auth?.status === 'authenticated' ? auth.user : null;
@@ -56,7 +58,10 @@ function AppNav({ allowGuestActions }: { allowGuestActions: boolean }) {
     if (!auth) {
       return;
     }
-    void auth.logout();
+    void (async () => {
+      await auth.logout();
+      toast.success('ออกจากระบบแล้ว');
+    })();
   };
 
   useEffect(() => {
@@ -191,18 +196,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-white text-ink-900">
-        {mode === 'auth' ? (
-          <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 text-black sm:px-6 lg:px-8">
-            {children}
-          </div>
-        ) : (
-          <>
-            <AppNav allowGuestActions={mode === 'public'} />
-            <main>{children}</main>
-          </>
-        )}
-      </div>
+      <ToastProvider>
+        <div className="min-h-screen bg-white text-ink-900">
+          {mode === 'auth' ? (
+            <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 text-black sm:px-6 lg:px-8">
+              {children}
+            </div>
+          ) : (
+            <>
+              <AppNav allowGuestActions={mode === 'public'} />
+              <main>{children}</main>
+            </>
+          )}
+        </div>
+      </ToastProvider>
     </AuthProvider>
   );
 }

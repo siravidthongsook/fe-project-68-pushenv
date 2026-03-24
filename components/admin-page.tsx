@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { useToast } from '@/components/toast-provider';
 import { AnchorButton, Badge, Button, EmptyState, Field, Panel, Select, Spinner, StatCard } from '@/components/shadcn-ui';
-import { Alert } from '@/components/alert';
 import { createInterview, getCompanies, getInterviews, getUsers } from '@/lib/api';
 import { interviewOptions } from '@/lib/date';
 import type { Company, Interview, User } from '@/lib/types';
@@ -24,8 +24,8 @@ function formatCompanyOption(company: Company) {
 
 export function AdminPage() {
   const { token } = useAuth();
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
   const [bookingUserId, setBookingUserId] = useState('');
   const [bookingCompanyId, setBookingCompanyId] = useState('');
   const [bookingDate, setBookingDate] = useState<string>(interviewOptions[0].value);
@@ -45,6 +45,12 @@ export function AdminPage() {
   const companies = data?.companies ?? EMPTY_COMPANIES;
   const interviews = data?.interviews ?? EMPTY_INTERVIEWS;
   const users = data?.users ?? EMPTY_USERS;
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
 
   useEffect(() => {
     if (users.length === 0) {
@@ -83,13 +89,12 @@ export function AdminPage() {
     }
 
     setBusy(true);
-    setMessage(null);
     try {
       await createInterview(token, bookingCompanyId, bookingDate, bookingUserId);
-      setMessage({ text: 'สร้างการจองให้ผู้ใช้แล้ว', tone: 'success' });
+      toast.success('สร้างการจองให้ผู้ใช้แล้ว');
       await reload();
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้');
     } finally {
       setBusy(false);
     }
@@ -110,7 +115,7 @@ export function AdminPage() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Panel className="p-6">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            {error}
+            โหลดหน้าสร้างการจองไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
           </div>
         </Panel>
       </div>
@@ -133,12 +138,6 @@ export function AdminPage() {
             ไปหน้าจัดการ
           </AnchorButton>
         </div>
-
-        {message ? (
-          <div className="max-w-3xl">
-            <Alert message={message.text} tone={message.tone} />
-          </div>
-        ) : null}
 
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="บริษัท" value={companyStats} note="รายการที่ใช้สร้างการจอง" />

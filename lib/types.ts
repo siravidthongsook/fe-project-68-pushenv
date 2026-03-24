@@ -46,6 +46,14 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface ApiFailureEnvelope {
+  success: false;
+  message: string;
+  error?: string | string[];
+  msg?: string;
+  [key: string]: unknown;
+}
+
 export interface ApiEnvelope<T> {
   success: boolean;
   data: T;

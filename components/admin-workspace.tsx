@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { Alert } from '@/components/alert';
+import { useToast } from '@/components/toast-provider';
 import { DeleteButton } from '@/components/delete-button';
 import { SearchSelectField } from '@/components/search-select-picker';
 import {
@@ -39,7 +39,6 @@ import { useAsync } from '@/hooks/use-async';
 import { cn, interviewCompanyName } from '@/lib/utils';
 
 type AdminSectionKey = 'bookings' | 'companies' | 'users';
-type NoticeTone = 'success' | 'error' | 'info';
 type CompanyFormState = {
   name: string;
   address: string;
@@ -234,11 +233,11 @@ function BookingsSection({
   users: User[];
   onReload: () => Promise<void>;
 }) {
+  const toast = useToast();
   const [query, setQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
   const [userFilter, setUserFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-  const [notice, setNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
   const [mode, setMode] = useState<'create' | 'edit' | 'user' | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -313,47 +312,40 @@ function BookingsSection({
   const openCreate = () => {
     setSelectedInterview(null);
     setMode('create');
-    setNotice(null);
   };
 
   const openEdit = (interview: Interview) => {
     setSelectedInterview(interview);
     setSelectedDate(interview.date);
     setMode('edit');
-    setNotice(null);
   };
 
   const openUser = (userId: string) => {
     setFocusedUserId(userId);
     setMode('user');
-    setNotice(null);
   };
 
   const submitBooking = async () => {
     if (!selectedDate) {
-      setNotice({ text: 'ยังไม่มีช่วงเวลาสัมภาษณ์ให้เลือก', tone: 'error' });
+      toast.error('ยังไม่มีช่วงเวลาสัมภาษณ์ให้เลือก');
       return;
     }
 
     setSubmitting(true);
-    setNotice(null);
 
     try {
       if (mode === 'create') {
         await createInterview(token, createCompanyId, selectedDate, createUserId);
-        setNotice({ text: 'สร้างการจองเรียบร้อยแล้ว', tone: 'success' });
+        toast.success('สร้างการจองเรียบร้อยแล้ว');
       } else if (mode === 'edit' && selectedInterview) {
         await updateInterview(token, selectedInterview.id, selectedDate);
-        setNotice({ text: 'ปรับวันสัมภาษณ์เรียบร้อยแล้ว', tone: 'success' });
+        toast.success('ปรับวันสัมภาษณ์เรียบร้อยแล้ว');
       }
 
       closeSheet();
       await onReload();
     } catch (error) {
-      setNotice({
-        text: error instanceof Error ? error.message : 'ไม่สามารถบันทึกการจองได้',
-        tone: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถบันทึกการจองได้');
     } finally {
       setSubmitting(false);
     }
@@ -361,17 +353,13 @@ function BookingsSection({
 
   const removeBooking = async (interviewId: string) => {
     setBusyId(interviewId);
-    setNotice(null);
 
     try {
       await deleteInterview(token, interviewId);
-      setNotice({ text: 'ยกเลิกการจองเรียบร้อยแล้ว', tone: 'success' });
+      toast.success('ยกเลิกการจองเรียบร้อยแล้ว');
       await onReload();
     } catch (error) {
-      setNotice({
-        text: error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้',
-        tone: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถยกเลิกการจองได้');
     } finally {
       setBusyId(null);
     }
@@ -391,9 +379,6 @@ function BookingsSection({
           Create booking
         </Button>
       </div>
-
-      {notice ? <Alert message={notice.text} tone={notice.tone} /> : null}
-
       <Panel className="space-y-4 p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Input
@@ -502,10 +487,6 @@ function BookingsSection({
               : 'ดูข้อมูลผู้ใช้และรายการจองของบัญชีนี้จากในหน้าเดียว'
         }
       >
-        {notice && (mode === 'create' || mode === 'edit') ? (
-          <Alert message={notice.text} tone={notice.tone} />
-        ) : null}
-
         {mode === 'user' && focusedUser ? (
           <div className="space-y-6">
             <Panel className="space-y-4 p-5">
@@ -697,8 +678,8 @@ function CompaniesSection({
   companies: Company[];
   onReload: () => Promise<void>;
 }) {
+  const toast = useToast();
   const [query, setQuery] = useState('');
-  const [notice, setNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
   const [mode, setMode] = useState<'create' | 'edit' | null>(null);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [form, setForm] = useState<CompanyFormState>(EMPTY_COMPANY_FORM);
@@ -723,7 +704,6 @@ function CompaniesSection({
     setEditingCompanyId(null);
     setForm(EMPTY_COMPANY_FORM);
     setMode('create');
-    setNotice(null);
   };
 
   const openEdit = (company: Company) => {
@@ -736,7 +716,6 @@ function CompaniesSection({
       tel: company.tel,
     });
     setMode('edit');
-    setNotice(null);
   };
 
   const closeSheet = () => {
@@ -746,7 +725,6 @@ function CompaniesSection({
 
   const submitCompany = async () => {
     setSubmitting(true);
-    setNotice(null);
 
     try {
       const payload = {
@@ -759,20 +737,17 @@ function CompaniesSection({
 
       if (mode === 'edit' && editingCompanyId) {
         await updateCompany(token, editingCompanyId, payload);
-        setNotice({ text: 'อัปเดตบริษัทเรียบร้อยแล้ว', tone: 'success' });
+        toast.success('อัปเดตบริษัทเรียบร้อยแล้ว');
       } else {
         await createCompany(token, payload);
-        setNotice({ text: 'เพิ่มบริษัทใหม่เรียบร้อยแล้ว', tone: 'success' });
+        toast.success('เพิ่มบริษัทใหม่เรียบร้อยแล้ว');
       }
 
       closeSheet();
       setForm(EMPTY_COMPANY_FORM);
       await onReload();
     } catch (error) {
-      setNotice({
-        text: error instanceof Error ? error.message : 'ไม่สามารถบันทึกบริษัทได้',
-        tone: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถบันทึกบริษัทได้');
     } finally {
       setSubmitting(false);
     }
@@ -780,17 +755,13 @@ function CompaniesSection({
 
   const removeCompanyById = async (companyId: string) => {
     setBusyId(companyId);
-    setNotice(null);
 
     try {
       await deleteCompany(token, companyId);
-      setNotice({ text: 'ลบบริษัทและการจองที่เกี่ยวข้องเรียบร้อยแล้ว', tone: 'success' });
+      toast.success('ลบบริษัทและการจองที่เกี่ยวข้องเรียบร้อยแล้ว');
       await onReload();
     } catch (error) {
-      setNotice({
-        text: error instanceof Error ? error.message : 'ไม่สามารถลบบริษัทได้',
-        tone: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถลบบริษัทได้');
     } finally {
       setBusyId(null);
     }
@@ -810,9 +781,6 @@ function CompaniesSection({
           Add company
         </Button>
       </div>
-
-      {notice ? <Alert message={notice.text} tone={notice.tone} /> : null}
-
       <Panel className="space-y-4 p-4 sm:p-5">
         <Input
           value={query}
@@ -868,8 +836,6 @@ function CompaniesSection({
             : 'เพิ่มบริษัทใหม่ให้พร้อมสำหรับการจองทันที'
         }
       >
-        {notice && mode ? <Alert message={notice.text} tone={notice.tone} /> : null}
-
         <div className="space-y-5">
             <div>
             <Field label="ชื่อบริษัท">
@@ -951,9 +917,9 @@ function UsersSection({
   onReload: () => Promise<void>;
   onRefreshSession: () => Promise<User | null>;
 }) {
+  const toast = useToast();
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | Role>('all');
-  const [notice, setNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
   const [drawerUserId, setDrawerUserId] = useState<string | null>(null);
   const [roleDraft, setRoleDraft] = useState<Role>('user');
   const [submitting, setSubmitting] = useState(false);
@@ -986,7 +952,6 @@ function UsersSection({
 
   const openUser = (userId: string) => {
     setDrawerUserId(userId);
-    setNotice(null);
   };
 
   const closeSheet = () => {
@@ -999,21 +964,17 @@ function UsersSection({
     }
 
     setSubmitting(true);
-    setNotice(null);
 
     try {
       await updateUser(token, selectedUser.id, { role: roleDraft });
-      setNotice({ text: 'อัปเดตบทบาทผู้ใช้เรียบร้อยแล้ว', tone: 'success' });
+      toast.success('อัปเดตบทบาทผู้ใช้เรียบร้อยแล้ว');
       await onReload();
 
       if (currentUser?.id === selectedUser.id) {
         await onRefreshSession();
       }
     } catch (error) {
-      setNotice({
-        text: error instanceof Error ? error.message : 'ไม่สามารถอัปเดตบทบาทได้',
-        tone: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถอัปเดตบทบาทได้');
     } finally {
       setSubmitting(false);
     }
@@ -1021,20 +982,16 @@ function UsersSection({
 
   const removeUserById = async (userId: string) => {
     setBusyId(userId);
-    setNotice(null);
 
     try {
       await deleteUser(token, userId);
-      setNotice({ text: 'ลบผู้ใช้และการจองที่เกี่ยวข้องเรียบร้อยแล้ว', tone: 'success' });
+      toast.success('ลบผู้ใช้และการจองที่เกี่ยวข้องเรียบร้อยแล้ว');
       if (drawerUserId === userId) {
         closeSheet();
       }
       await onReload();
     } catch (error) {
-      setNotice({
-        text: error instanceof Error ? error.message : 'ไม่สามารถลบผู้ใช้ได้',
-        tone: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'ไม่สามารถลบผู้ใช้ได้');
     } finally {
       setBusyId(null);
     }
@@ -1049,9 +1006,6 @@ function UsersSection({
           ตรวจสอบบทบาท ประวัติการจอง และลบบัญชีที่ไม่ต้องการจากพื้นที่เดียว
         </p>
       </div>
-
-      {notice ? <Alert message={notice.text} tone={notice.tone} /> : null}
-
       <Panel className="space-y-4 p-4 sm:p-5">
         <div className="grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(200px,1fr)]">
           <Input
@@ -1143,9 +1097,6 @@ function UsersSection({
                 </div>
               </div>
             </Panel>
-
-            {notice ? <Alert message={notice.text} tone={notice.tone} /> : null}
-
             <Panel className="space-y-4 p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -1210,6 +1161,7 @@ function UsersSection({
 
 export function AdminWorkspace() {
   const { refresh, token, user } = useAuth();
+  const toast = useToast();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1235,6 +1187,12 @@ export function AdminWorkspace() {
   const users = data?.users ?? EMPTY_USERS;
   const bookingSlots = data?.bookingSlots ?? EMPTY_SLOTS;
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
+
   const changeSection = (section: AdminSectionKey) => {
     router.replace(buildSectionHref(pathname, new URLSearchParams(searchParams.toString()), section), {
       scroll: false,
@@ -1256,7 +1214,7 @@ export function AdminWorkspace() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Panel className="p-6">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            {error || 'ไม่สามารถโหลดข้อมูลผู้ดูแลได้'}
+            โหลดข้อมูลผู้ดูแลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
           </div>
         </Panel>
       </div>

@@ -25,6 +25,18 @@
   }
 }
 
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 @layer components {
   .font-display {
     font-family: var(--font-sans-en), var(--font-sans-thai), sans-serif;
@@ -74,5 +86,9 @@
 
   .nav-link-active-dark {
     @apply bg-white text-ink-900 hover:bg-white hover:text-ink-900;
+  }
+
+  .toast-enter {
+    animation: toast-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 }

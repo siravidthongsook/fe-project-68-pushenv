@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useOptionalAuth } from '@/components/auth-provider';
+import { useToast } from '@/components/toast-provider';
 import { AnchorButton, Badge, EmptyState, Input, Panel, Spinner } from '@/components/shadcn-ui';
 import { getCompanies } from '@/lib/api';
 import type { Company } from '@/lib/types';
@@ -42,6 +43,7 @@ function CompanyCard({ company }: { company: Company }) {
 
 export function CompanyCatalog() {
   const auth = useOptionalAuth();
+  const toast = useToast();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,12 @@ export function CompanyCatalog() {
       active = false;
     };
   }, [auth?.token]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
 
   const filtered = useMemo(() => {
     const term = debouncedQuery.trim().toLowerCase();
@@ -134,7 +142,7 @@ export function CompanyCatalog() {
         ) : error ? (
           <Panel className="p-6">
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-              {error}
+              โหลดรายชื่อบริษัทไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
             </div>
           </Panel>
         ) : filtered.length === 0 ? (

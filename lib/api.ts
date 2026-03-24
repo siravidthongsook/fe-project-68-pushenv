@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/lib/constants';
 import type {
   ApiEnvelope,
+  ApiFailureEnvelope,
   AuthResponse,
   BookingSlot,
   Company,
@@ -37,8 +38,8 @@ function readErrorMessage(payload: unknown, fallback: string) {
 
   const data = isRecord(payload.data) ? payload.data : null;
   const candidates = [
-    payload.error,
     payload.message,
+    payload.error,
     payload.msg,
     data ? data.message : undefined,
   ];
@@ -190,11 +191,11 @@ export async function getMe(token: string) {
  * @throws {ApiError} on invalid credentials
  */
 export async function loginUser(email: string, password: string) {
-  const payload = await request<AuthResponse>('/api/v1/auth/login', {
+  const payload = await request<AuthResponse | ApiFailureEnvelope>('/api/v1/auth/login', {
     method: 'POST',
     body: { email, password },
   });
-  return payload.token;
+  return (payload as AuthResponse).token;
 }
 
 /**
@@ -209,11 +210,11 @@ export async function registerUser(data: {
   password: string;
   role: Role;
 }) {
-  const payload = await request<AuthResponse>('/api/v1/auth/register', {
+  const payload = await request<AuthResponse | ApiFailureEnvelope>('/api/v1/auth/register', {
     method: 'POST',
     body: data,
   });
-  return payload.token;
+  return (payload as AuthResponse).token;
 }
 
 /**

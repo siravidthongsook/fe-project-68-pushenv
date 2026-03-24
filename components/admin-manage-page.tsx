@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
+import { useToast } from '@/components/toast-provider';
 import {
   AnchorButton,
   Badge,
@@ -28,7 +29,6 @@ import { formatDate, interviewOptions } from '@/lib/date';
 import type { Company, Interview } from '@/lib/types';
 import { interviewCompanyName } from '@/lib/utils';
 import { useAsync } from '@/hooks/use-async';
-import { Alert } from '@/components/alert';
 import { DeleteButton } from '@/components/delete-button';
 
 type CompanyForm = {
@@ -52,8 +52,8 @@ const EMPTY_INTERVIEWS: Interview[] = [];
 
 export function AdminManagePage() {
   const { token } = useAuth();
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
   const [companyForm, setCompanyForm] = useState<CompanyForm>(emptyCompanyForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
@@ -71,6 +71,12 @@ export function AdminManagePage() {
   const companies = data?.companies ?? EMPTY_COMPANIES;
   const interviews = data?.interviews ?? EMPTY_INTERVIEWS;
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
+
   const companyStats = companies.length.toString();
   const interviewStats = interviews.length.toString();
 
@@ -80,7 +86,6 @@ export function AdminManagePage() {
     }
 
     setBusy(true);
-    setMessage(null);
     try {
       const payload = {
         name: companyForm.name.trim(),
@@ -92,17 +97,17 @@ export function AdminManagePage() {
 
       if (editingCompanyId) {
         await updateCompany(token, editingCompanyId, payload);
-        setMessage({ text: 'อัปเดตบริษัทแล้ว', tone: 'success' });
+        toast.success('อัปเดตบริษัทแล้ว');
       } else {
         await createCompany(token, payload);
-        setMessage({ text: 'สร้างบริษัทแล้ว', tone: 'success' });
+        toast.success('สร้างบริษัทแล้ว');
       }
 
       setCompanyForm(emptyCompanyForm);
       setEditingCompanyId(null);
       await reload();
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถบันทึกได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถบันทึกได้');
     } finally {
       setBusy(false);
     }
@@ -125,13 +130,12 @@ export function AdminManagePage() {
     }
 
     setBusy(true);
-    setMessage(null);
     try {
       await deleteCompany(token, companyId);
-      setMessage({ text: 'ลบบริษัทแล้ว', tone: 'success' });
+      toast.success('ลบบริษัทแล้ว');
       await reload();
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถลบบริษัทได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถลบบริษัทได้');
     } finally {
       setBusy(false);
     }
@@ -143,14 +147,13 @@ export function AdminManagePage() {
     }
 
     setBusy(true);
-    setMessage(null);
     try {
       await updateInterview(token, selectedInterview.id, editInterviewDate);
-      setMessage({ text: 'อัปเดตรอบสัมภาษณ์แล้ว', tone: 'success' });
+      toast.success('อัปเดตรอบสัมภาษณ์แล้ว');
       setSelectedInterview(null);
       await reload();
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถอัปเดตรอบสัมภาษณ์ได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถอัปเดตรอบสัมภาษณ์ได้');
     } finally {
       setBusy(false);
     }
@@ -162,13 +165,12 @@ export function AdminManagePage() {
     }
 
     setBusy(true);
-    setMessage(null);
     try {
       await deleteInterview(token, interviewId);
-      setMessage({ text: 'ลบรอบสัมภาษณ์แล้ว', tone: 'success' });
+      toast.success('ลบรอบสัมภาษณ์แล้ว');
       await reload();
     } catch (err) {
-      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถลบรอบสัมภาษณ์ได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถลบรอบสัมภาษณ์ได้');
     } finally {
       setBusy(false);
     }
@@ -189,7 +191,7 @@ export function AdminManagePage() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Panel className="p-6">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            {error}
+            โหลดหน้าจัดการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
           </div>
         </Panel>
       </div>
@@ -212,12 +214,6 @@ export function AdminManagePage() {
             ไปหน้าสร้างการจอง
           </AnchorButton>
         </div>
-
-        {message ? (
-          <div className="max-w-3xl">
-            <Alert message={message.text} tone={message.tone} />
-          </div>
-        ) : null}
 
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="บริษัท" value={companyStats} note="รายการที่พร้อมแก้ไข" />

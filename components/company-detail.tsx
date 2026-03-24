@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useOptionalAuth } from '@/components/auth-provider';
+import { useToast } from '@/components/toast-provider';
 import { AnchorButton, Badge, Button, EmptyState, Field, Panel, Select, Spinner } from '@/components/shadcn-ui';
 import { createInterview, getCompany, getInterviewSlots } from '@/lib/api';
 import { formatDate, interviewOptions } from '@/lib/date';
@@ -9,6 +10,7 @@ import type { BookingSlot, Company } from '@/lib/types';
 
 export function CompanyDetail({ id }: { id: string }) {
   const auth = useOptionalAuth();
+  const toast = useToast();
   const user = auth?.user ?? null;
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +18,6 @@ export function CompanyDetail({ id }: { id: string }) {
   const [bookingDate, setBookingDate] = useState<string>(interviewOptions[0].value);
   const [bookingSlots, setBookingSlots] = useState<BookingSlot[]>([...interviewOptions]);
   const [submitting, setSubmitting] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const canBook = user?.role === 'user';
 
@@ -48,6 +49,12 @@ export function CompanyDetail({ id }: { id: string }) {
       active = false;
     };
   }, [auth?.token, id]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
 
   useEffect(() => {
     if (!canBook || !auth?.token) {
@@ -97,15 +104,14 @@ export function CompanyDetail({ id }: { id: string }) {
     }
 
     setSubmitting(true);
-    setNotice(null);
 
     try {
       await createInterview(auth.token, company.id, bookingDate);
-      setNotice('จองสัมภาษณ์เรียบร้อยแล้ว');
+      toast.success('จองสัมภาษณ์เรียบร้อยแล้ว');
       const refreshed = await getCompany(id, auth.token);
       setCompany(refreshed);
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : 'ไม่สามารถจองสัมภาษณ์ได้');
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถจองสัมภาษณ์ได้');
     } finally {
       setSubmitting(false);
     }
@@ -126,7 +132,7 @@ export function CompanyDetail({ id }: { id: string }) {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <EmptyState
           title="ไม่พบบริษัท"
-          description={error || 'บริษัทนี้ไม่มีอยู่หรือคุณไม่มีสิทธิ์เข้าถึง'}
+          description={error ? 'โหลดข้อมูลบริษัทไม่สำเร็จ กรุณาลองใหม่อีกครั้ง' : 'บริษัทนี้ไม่มีอยู่หรือคุณไม่มีสิทธิ์เข้าถึง'}
           action={<AnchorButton href="/companies" variant="secondary">กลับไปรายชื่อบริษัท</AnchorButton>}
         />
       </div>
@@ -207,12 +213,6 @@ export function CompanyDetail({ id }: { id: string }) {
               <p className="eyebrow">การดำเนินการ</p>
               <h2 className="mt-2 font-display text-2xl text-ink-900">จองสัมภาษณ์</h2>
             </div>
-
-            {notice ? (
-              <div className="rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900">
-                {notice}
-              </div>
-            ) : null}
 
             {hasBookedThisCompany && myInterview ? (
               <div className="space-y-4 rounded-3xl border border-accent-200 bg-accent-50 p-5">

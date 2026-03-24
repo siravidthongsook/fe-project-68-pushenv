@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { Alert } from '@/components/alert';
+import { useToast } from '@/components/toast-provider';
 import { DeleteButton } from '@/components/delete-button';
 import { SearchSelectField } from '@/components/search-select-picker';
 import {
@@ -35,7 +35,6 @@ import { cn, interviewCompanyName } from '@/lib/utils';
 
 type DashboardSectionKey = 'overview' | 'new' | 'bookings';
 type BookingMode = 'single' | 'multi';
-type NoticeTone = 'success' | 'error' | 'info';
 
 const EMPTY_COMPANIES: Company[] = [];
 const EMPTY_INTERVIEWS: Interview[] = [];
@@ -353,7 +352,6 @@ function NewBookingSection({
   isAdmin,
   maxSelectableCount,
   multiCompanyIds,
-  multiNotice,
   multiQuery,
   multiSubmitting,
   onChangeMode,
@@ -365,7 +363,6 @@ function NewBookingSection({
   remainingSlotsLabel,
   selectedSingleCompanyId,
   singleDate,
-  singleNotice,
   singleSubmitting,
   onSelectSingleCompany,
   onSingleDateChange,
@@ -379,7 +376,6 @@ function NewBookingSection({
   isAdmin: boolean;
   maxSelectableCount: number;
   multiCompanyIds: string[];
-  multiNotice: { text: string; tone: NoticeTone } | null;
   multiQuery: string;
   multiSubmitting: boolean;
   onChangeMode: (mode: BookingMode) => void;
@@ -391,7 +387,6 @@ function NewBookingSection({
   remainingSlotsLabel: string;
   selectedSingleCompanyId: string;
   singleDate: string;
-  singleNotice: { text: string; tone: NoticeTone } | null;
   singleSubmitting: boolean;
   onSelectSingleCompany: (companyId: string) => void;
   onSingleDateChange: (value: string) => void;
@@ -492,8 +487,6 @@ function NewBookingSection({
                 เหมาะเมื่อคุณรู้แล้วว่าจะเริ่มที่ไหน เลือกบริษัทหนึ่งแห่งและเวลาที่ต้องการก่อนยืนยัน
               </p>
             </div>
-
-            {singleNotice ? <Alert message={singleNotice.text} tone={singleNotice.tone} /> : null}
 
             {bookingLocked ? (
               <EmptyState
@@ -603,8 +596,6 @@ function NewBookingSection({
               </p>
             </div>
 
-            {multiNotice ? <Alert message={multiNotice.text} tone={multiNotice.tone} /> : null}
-
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
               <Input
                 value={multiQuery}
@@ -698,7 +689,6 @@ function NewBookingSection({
 }
 
 function MyBookingsSection({
-  bookingsNotice,
   deleteBusyId,
   interviews,
   isAdmin,
@@ -706,7 +696,6 @@ function MyBookingsSection({
   onOpenOverview,
   onDeleteInterview,
 }: {
-  bookingsNotice: { text: string; tone: NoticeTone } | null;
   deleteBusyId: string | null;
   interviews: Interview[];
   isAdmin: boolean;
@@ -725,8 +714,6 @@ function MyBookingsSection({
           เปลี่ยนวัน ยกเลิกรายการ หรือเปิดหน้าบริษัทเดิมโดยไม่ต้องกลับไปค้นหาใหม่
         </p>
       </div>
-
-      {bookingsNotice ? <Alert message={bookingsNotice.text} tone={bookingsNotice.tone} /> : null}
 
       {interviews.length === 0 ? (
         <EmptyState
@@ -779,6 +766,7 @@ function MyBookingsSection({
 
 export function DashboardPage() {
   const { user, token } = useAuth();
+  const toast = useToast();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -791,10 +779,6 @@ export function DashboardPage() {
   const [companyQuery, setCompanyQuery] = useState('');
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
   const [editDate, setEditDate] = useState<string>(interviewOptions[0].value);
-  const [singleNotice, setSingleNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
-  const [multiNotice, setMultiNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
-  const [bookingsNotice, setBookingsNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
-  const [sheetNotice, setSheetNotice] = useState<{ text: string; tone: NoticeTone } | null>(null);
   const [singleSubmitting, setSingleSubmitting] = useState(false);
   const [multiSubmitting, setMultiSubmitting] = useState(false);
   const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
@@ -871,6 +855,12 @@ export function DashboardPage() {
     setSelectedCompanyIds((current) => current.filter((companyId) => validIds.has(companyId)));
   }, [availableCompanies]);
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error, toast]);
+
   const updateView = (updates: { section?: DashboardSectionKey; mode?: BookingMode }) => {
     router.replace(buildDashboardHref(pathname, new URLSearchParams(searchParams.toString()), updates), {
       scroll: false,
@@ -880,12 +870,10 @@ export function DashboardPage() {
   const openReschedule = (interview: Interview) => {
     setEditingInterview(interview);
     setEditDate(interview.date);
-    setSheetNotice(null);
   };
 
   const closeReschedule = () => {
     setEditingInterview(null);
-    setSheetNotice(null);
   };
 
   const toggleCompany = (companyId: string, checked: boolean) => {
@@ -895,15 +883,12 @@ export function DashboardPage() {
     }
 
     if (maxSelectableCount === 0) {
-      setMultiNotice({ text: 'คุณไม่มีสิทธิ์เหลือสำหรับการจองใหม่', tone: 'error' });
+      toast.error('คุณไม่มีสิทธิ์เหลือสำหรับการจองใหม่');
       return;
     }
 
     if (selectedCompanyIds.length >= maxSelectableCount) {
-      setMultiNotice({
-        text: `คุณเลือกได้สูงสุด ${maxSelectableCount} บริษัทตามสิทธิ์ที่เหลือ`,
-        tone: 'error',
-      });
+      toast.error(`คุณเลือกได้สูงสุด ${maxSelectableCount} บริษัทตามสิทธิ์ที่เหลือ`);
       return;
     }
 
@@ -916,15 +901,14 @@ export function DashboardPage() {
     }
 
     setSingleSubmitting(true);
-    setSingleNotice(null);
 
     try {
       await createInterview(token, singleCompanyId, singleDate);
-      setSingleNotice({ text: 'จองบริษัทเรียบร้อยแล้ว', tone: 'success' });
+      toast.success('จองบริษัทเรียบร้อยแล้ว');
       updateView({ section: 'bookings' });
       await reload();
     } catch (err) {
-      setSingleNotice({ text: err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้');
     } finally {
       setSingleSubmitting(false);
     }
@@ -936,16 +920,15 @@ export function DashboardPage() {
     }
 
     setMultiSubmitting(true);
-    setMultiNotice(null);
 
     try {
       await createBulkInterviews(token, selectedCompanyIds, bulkDate);
-      setMultiNotice({ text: 'จองหลายบริษัทเรียบร้อยแล้ว', tone: 'success' });
+      toast.success('จองหลายบริษัทเรียบร้อยแล้ว');
       setSelectedCompanyIds([]);
       updateView({ section: 'bookings' });
       await reload();
     } catch (err) {
-      setMultiNotice({ text: err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้');
     } finally {
       setMultiSubmitting(false);
     }
@@ -957,15 +940,14 @@ export function DashboardPage() {
     }
 
     setRescheduleSubmitting(true);
-    setSheetNotice(null);
 
     try {
       await updateInterview(token, editingInterview.id, editDate);
-      setBookingsNotice({ text: 'อัปเดตรอบสัมภาษณ์แล้ว', tone: 'success' });
+      toast.success('อัปเดตรอบสัมภาษณ์แล้ว');
       closeReschedule();
       await reload();
     } catch (err) {
-      setSheetNotice({ text: err instanceof Error ? err.message : 'ไม่สามารถอัปเดตได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถอัปเดตได้');
     } finally {
       setRescheduleSubmitting(false);
     }
@@ -977,14 +959,13 @@ export function DashboardPage() {
     }
 
     setDeleteBusyId(interviewId);
-    setBookingsNotice(null);
 
     try {
       await deleteInterview(token, interviewId);
-      setBookingsNotice({ text: 'ลบรอบสัมภาษณ์แล้ว', tone: 'success' });
+      toast.success('ลบรอบสัมภาษณ์แล้ว');
       await reload();
     } catch (err) {
-      setBookingsNotice({ text: err instanceof Error ? err.message : 'ไม่สามารถลบได้', tone: 'error' });
+      toast.error(err instanceof Error ? err.message : 'ไม่สามารถลบได้');
     } finally {
       setDeleteBusyId(null);
     }
@@ -1005,7 +986,7 @@ export function DashboardPage() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <Panel className="p-6">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            {error}
+            โหลดแดชบอร์ดไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
           </div>
         </Panel>
       </div>
@@ -1080,7 +1061,6 @@ export function DashboardPage() {
             isAdmin={isAdmin}
             maxSelectableCount={maxSelectableCount}
             multiCompanyIds={selectedCompanyIds}
-            multiNotice={multiNotice}
             multiQuery={companyQuery}
             multiSubmitting={multiSubmitting}
             onChangeMode={(mode) => updateView({ mode })}
@@ -1092,7 +1072,6 @@ export function DashboardPage() {
             remainingSlotsLabel={remainingSlotsLabel}
             selectedSingleCompanyId={singleCompanyId}
             singleDate={singleDate}
-            singleNotice={singleNotice}
             singleSubmitting={singleSubmitting}
             onSelectSingleCompany={setSingleCompanyId}
             onSingleDateChange={setSingleDate}
@@ -1103,7 +1082,6 @@ export function DashboardPage() {
 
         {activeSection === 'bookings' ? (
           <MyBookingsSection
-            bookingsNotice={bookingsNotice}
             deleteBusyId={deleteBusyId}
             interviews={sortedInterviews}
             isAdmin={isAdmin}
@@ -1132,8 +1110,6 @@ export function DashboardPage() {
                 <p className="mt-2 text-sm text-ink-900">{formatDateTime(editingInterview.date)}</p>
               </div>
             </Panel>
-
-            {sheetNotice ? <Alert message={sheetNotice.text} tone={sheetNotice.tone} /> : null}
             <div>
               <Field label="ช่วงเวลาใหม่">
                 <Select value={editDate} onChange={(event) => setEditDate(event.target.value)}>
