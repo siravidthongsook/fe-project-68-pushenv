@@ -1,6 +1,5 @@
-import { AdminPage } from '@/components/admin-page';
+import { AdminWorkspace } from '@/components/admin-workspace';
 
 export default function AdminRoute() {
-  return <AdminPage />;
+  return <AdminWorkspace />;
 }
-

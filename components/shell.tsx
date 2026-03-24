@@ -32,6 +32,7 @@ function TopNav() {
   const pathname = usePathname();
   const auth = useOptionalAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const visibleLinks = NAV_LINKS.filter((link) => link.href !== '/admin' || auth?.user?.role === 'admin');
 
   useEffect(() => {
     setMenuOpen(false);
@@ -50,7 +51,9 @@ function TopNav() {
   }, [menuOpen]);
 
   const isActive = (href: string) =>
-    pathname === href || (href !== '/' && pathname.startsWith(href));
+    href === '/admin'
+      ? pathname === href
+      : pathname === href || (href !== '/' && pathname.startsWith(href));
 
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
@@ -59,7 +62,7 @@ function TopNav() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-2 md:flex">
-          {NAV_LINKS.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -118,7 +121,7 @@ function TopNav() {
       {menuOpen && (
         <div className="border-t border-zinc-200 bg-white px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-3">
-            {NAV_LINKS.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -153,6 +156,7 @@ function ProtectedNav() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const visibleLinks = NAV_LINKS.filter((link) => link.href !== '/admin' || user?.role === 'admin');
 
   useEffect(() => {
     setMenuOpen(false);
@@ -180,7 +184,7 @@ function ProtectedNav() {
 
         {/* Desktop nav — unchanged */}
         <nav className="hidden items-center gap-2 md:flex">
-          {NAV_LINKS.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -244,7 +248,7 @@ function ProtectedNav() {
             </div>
           )}
           <nav className="flex flex-col gap-1 pt-3">
-            {NAV_LINKS.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -253,10 +257,10 @@ function ProtectedNav() {
                   'rounded-xl px-4 py-2.5 text-sm font-medium text-ink-600 transition-colors hover:bg-zinc-50 hover:text-ink-900',
                   isActive(link.href) && 'bg-zinc-100 text-ink-900',
                 )}
-              >
-                {link.label}
-              </Link>
-            ))}
+                >
+                  {link.label}
+                </Link>
+              ))}
             {/* ← Add logout at bottom of mobile drawer */}
             {user && (
               <button

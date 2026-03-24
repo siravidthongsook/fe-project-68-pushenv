@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOptionalAuth } from '@/components/auth-provider';
 import { AnchorButton, Badge, Button, EmptyState, Field, Panel, Select, Spinner } from '@/components/shadcn-ui';
-import { createInterview, getCompany } from '@/lib/api';
+import { createInterview, getCompany, getInterviewSlots } from '@/lib/api';
 import { formatDate, interviewOptions } from '@/lib/date';
-import type { Company } from '@/lib/types';
+import type { BookingSlot, Company } from '@/lib/types';
 
 export function CompanyDetail({ id }: { id: string }) {
   const auth = useOptionalAuth();
@@ -14,6 +14,7 @@ export function CompanyDetail({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingDate, setBookingDate] = useState<string>(interviewOptions[0].value);
+  const [bookingSlots, setBookingSlots] = useState<BookingSlot[]>([...interviewOptions]);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -47,6 +48,36 @@ export function CompanyDetail({ id }: { id: string }) {
       active = false;
     };
   }, [auth?.token, id]);
+
+  useEffect(() => {
+    if (!canBook || !auth?.token) {
+      return;
+    }
+
+    let active = true;
+
+    getInterviewSlots(auth.token)
+      .then((slots) => {
+        if (active && slots.length > 0) {
+          setBookingSlots(slots);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setBookingSlots([...interviewOptions]);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [auth?.token, canBook]);
+
+  useEffect(() => {
+    if (!bookingSlots.some((slot) => slot.value === bookingDate)) {
+      setBookingDate(bookingSlots[0]?.value ?? '');
+    }
+  }, [bookingDate, bookingSlots]);
 
   const interviewCount = company?.bookingCount ?? 0;
 
@@ -169,16 +200,16 @@ export function CompanyDetail({ id }: { id: string }) {
 
             {canBook ? (
               <div className="space-y-4">
-                <Field label="วันที่สัมภาษณ์" hint="มีให้เลือก 4 วัน">
+                <Field label="วันที่สัมภาษณ์" hint={`มีให้เลือก ${bookingSlots.length} ช่วงเวลา`}>
                   <Select value={bookingDate} onChange={(event) => setBookingDate(event.target.value)}>
-                    {interviewOptions.map((option) => (
+                    {bookingSlots.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </Select>
                 </Field>
-                <Button onClick={() => void submitBooking()} disabled={submitting} className="w-full">
+                <Button onClick={() => void submitBooking()} disabled={submitting || !bookingDate} className="w-full">
                   {submitting ? 'กำลังจอง...' : 'จองบริษัทนี้'}
                 </Button>
               </div>
