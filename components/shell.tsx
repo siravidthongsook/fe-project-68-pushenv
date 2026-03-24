@@ -31,6 +31,19 @@ function getRoleLabel(role: 'user' | 'admin') {
   return role === 'admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้';
 }
 
+function getShellMode(pathname: string | null) {
+  if (!pathname) {
+    return 'public';
+  }
+  if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
+    return 'auth';
+  }
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+    return 'protected';
+  }
+  return 'public';
+}
+
 function AppNav({ allowGuestActions }: { allowGuestActions: boolean }) {
   const auth = useOptionalAuth();
   const pathname = usePathname();
@@ -172,35 +185,23 @@ function AppNav({ allowGuestActions }: { allowGuestActions: boolean }) {
   );
 }
 
-export function SiteShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const mode = getShellMode(pathname);
+
   return (
     <AuthProvider>
       <div className="min-h-screen bg-white text-ink-900">
-        <AppNav allowGuestActions />
-        <main>{children}</main>
-      </div>
-    </AuthProvider>
-  );
-}
-
-export function ProtectedShell({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <div className="min-h-screen bg-white text-ink-900">
-        <AppNav allowGuestActions={false} />
-        <main>{children}</main>
-      </div>
-    </AuthProvider>
-  );
-}
-
-export function AuthShell({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <div className="min-h-screen bg-white text-black">
-        <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
-          {children}
-        </div>
+        {mode === 'auth' ? (
+          <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-10 text-black sm:px-6 lg:px-8">
+            {children}
+          </div>
+        ) : (
+          <>
+            <AppNav allowGuestActions={mode === 'public'} />
+            <main>{children}</main>
+          </>
+        )}
       </div>
     </AuthProvider>
   );
