@@ -80,6 +80,11 @@ export function CompanyDetail({ id }: { id: string }) {
   }, [bookingDate, bookingSlots]);
 
   const interviewCount = company?.bookingCount ?? 0;
+  const myInterview = useMemo(
+    () => company?.interview.find((interview) => interview.user.id === user?.id) ?? null,
+    [company?.interview, user?.id],
+  );
+  const hasBookedThisCompany = canBook && myInterview !== null;
 
   const bookedDates = useMemo(
     () => new Set((company?.interview ?? []).map((item) => new Date(item.date).toISOString().slice(0, 10))),
@@ -164,10 +169,21 @@ export function CompanyDetail({ id }: { id: string }) {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-ink-900">ประวัติการจอง</h2>
-              <Badge tone="neutral">{bookedDates.size} วันที่</Badge>
+              <h2 className="text-lg font-semibold text-ink-900">
+                {hasBookedThisCompany ? 'การจองของคุณ' : 'ประวัติการจอง'}
+              </h2>
+              <Badge tone="neutral">{hasBookedThisCompany ? 'Booked' : `${bookedDates.size} วันที่`}</Badge>
             </div>
-            {company.interview.length === 0 ? (
+
+            {hasBookedThisCompany && myInterview ? (
+              <div className="rounded-3xl border border-accent-200 bg-accent-50 p-5">
+                <p className="text-sm font-semibold text-accent-900">คุณจองบริษัทนี้แล้ว</p>
+                <p className="mt-2 text-lg font-semibold text-ink-900">{formatDate(myInterview.date)}</p>
+                <p className="mt-2 text-sm leading-6 text-ink-700">
+                  รายการนี้อยู่ในแดชบอร์ดของคุณแล้ว หากต้องการเปลี่ยนวันหรือยกเลิก ให้จัดการจากหน้ารายการจองของคุณ
+                </p>
+              </div>
+            ) : company.interview.length === 0 ? (
               <EmptyState
                 title="ยังไม่มีการจอง"
                 description="บริษัทนี้ยังไม่มีรอบสัมภาษณ์"
@@ -198,7 +214,29 @@ export function CompanyDetail({ id }: { id: string }) {
               </div>
             ) : null}
 
-            {canBook ? (
+            {hasBookedThisCompany && myInterview ? (
+              <div className="space-y-4 rounded-3xl border border-accent-200 bg-accent-50 p-5">
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-accent-900">Booked</p>
+                  <h3 className="text-2xl font-semibold text-ink-900">คุณจองบริษัทนี้แล้ว</h3>
+                  <p className="text-sm leading-6 text-ink-700">
+                    รอบสัมภาษณ์ของคุณถูกบันทึกไว้แล้วที่ {formatDate(myInterview.date)} จึงไม่สามารถจองบริษัทเดิมซ้ำจากหน้านี้ได้
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/70 bg-white/70 p-4">
+                  <p className="text-xs font-semibold uppercase text-zinc-500">รายการของคุณ</p>
+                  <p className="mt-2 text-sm font-semibold text-ink-900">{formatDate(myInterview.date)}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <AnchorButton href="/dashboard?section=bookings">ไปที่รายการจองของฉัน</AnchorButton>
+                  <AnchorButton href="/dashboard?section=bookings" variant="secondary">
+                    เปลี่ยนวันหรือจัดการรายการ
+                  </AnchorButton>
+                </div>
+              </div>
+            ) : canBook ? (
               <div className="space-y-4">
                 <Field label="วันที่สัมภาษณ์" hint={`มีให้เลือก ${bookingSlots.length} ช่วงเวลา`}>
                   <Select value={bookingDate} onChange={(event) => setBookingDate(event.target.value)}>

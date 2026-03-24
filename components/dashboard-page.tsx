@@ -312,7 +312,7 @@ function OverviewSection({
         </div>
 
         <div className="rounded-3xl border border-zinc-200 bg-zinc-50 p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Quick Actions</p>
+          <p className="text-xs font-semibold uppercase text-zinc-500">Quick Actions</p>
           <div className="mt-4 grid gap-3">
             <button
               type="button"
@@ -569,7 +569,7 @@ function NewBookingSection({
                   <p className="mt-2 text-xs text-zinc-500">{selectedSingleCompany.tel} • {selectedSingleCompany.bookingCount} การจองในระบบ</p>
                 </div>
                 <div className="rounded-3xl border border-zinc-200 bg-white p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">เวลาที่เลือก</p>
+                  <p className="text-xs font-semibold uppercase text-zinc-500">เวลาที่เลือก</p>
                   <p className="mt-2 text-lg font-semibold text-zinc-900">
                     {bookingSlots.find((slot) => slot.value === singleDate)?.label ?? 'ยังไม่เลือกเวลา'}
                   </p>
@@ -673,7 +673,7 @@ function NewBookingSection({
             )}
 
             <div className="rounded-3xl border border-zinc-200 bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">ช่วงเวลาที่เลือก</p>
+              <p className="text-xs font-semibold uppercase text-zinc-500">ช่วงเวลาที่เลือก</p>
               <p className="mt-2 text-lg font-semibold text-zinc-900">
                 {bookingSlots.find((slot) => slot.value === bulkDate)?.label ?? 'ยังไม่เลือกเวลา'}
               </p>
@@ -1128,7 +1128,7 @@ export function DashboardPage() {
                 <p className="mt-1 text-sm text-ink-500">{editingInterview.company.address}</p>
               </div>
               <div className="rounded-2xl border border-zinc-200 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">เวลาปัจจุบัน</p>
+                <p className="text-xs font-semibold uppercase text-zinc-500">เวลาปัจจุบัน</p>
                 <p className="mt-2 text-sm text-ink-900">{formatDateTime(editingInterview.date)}</p>
               </div>
             </Panel>

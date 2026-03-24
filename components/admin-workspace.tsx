@@ -204,7 +204,7 @@ function DataTable({
   return (
     <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-[0_18px_48px_rgba(0,0,0,0.08)]">
       <table className="min-w-full divide-y divide-zinc-200 text-sm">
-        <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+        <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500">
           <tr>
             {columns.map((column) => (
               <th key={column} scope="col" className="px-4 py-3">
@@ -518,11 +518,11 @@ function BookingsSection({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-zinc-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">โทรศัพท์</p>
+                  <p className="text-xs font-semibold uppercase text-zinc-500">โทรศัพท์</p>
                   <p className="mt-2 text-sm text-ink-900">{focusedUser.telephone || 'ไม่มีข้อมูล'}</p>
                 </div>
                 <div className="rounded-2xl border border-zinc-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">การจอง</p>
+                  <p className="text-xs font-semibold uppercase text-zinc-500">การจอง</p>
                   <p className="mt-2 text-sm text-ink-900">{focusedUser.bookingCount} รายการ</p>
                 </div>
               </div>
@@ -660,7 +660,7 @@ function BookingsSection({
                 </p>
               </div>
               <div className="rounded-2xl border border-zinc-200 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">เวลาปัจจุบัน</p>
+                <p className="text-xs font-semibold uppercase text-zinc-500">เวลาปัจจุบัน</p>
                 <p className="mt-2 text-sm text-ink-900">{formatDateTime(selectedInterview.date)}</p>
               </div>
             </Panel>
@@ -1124,11 +1124,11 @@ function UsersSection({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-zinc-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">เบอร์โทร</p>
+                  <p className="text-xs font-semibold uppercase text-zinc-500">เบอร์โทร</p>
                   <p className="mt-2 text-sm text-ink-900">{selectedUser.telephone || 'ไม่มีข้อมูล'}</p>
                 </div>
                 <div className="rounded-2xl border border-zinc-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">การจองทั้งหมด</p>
+                  <p className="text-xs font-semibold uppercase text-zinc-500">การจองทั้งหมด</p>
                   <p className="mt-2 text-sm text-ink-900">{selectedUser.bookingCount} รายการ</p>
                 </div>
               </div>

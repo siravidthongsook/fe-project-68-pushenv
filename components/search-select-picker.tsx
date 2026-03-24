@@ -344,7 +344,7 @@ export function SearchSelectField<T,>({
             </div>
           )}
         </div>
-        <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+        <span className="text-xs font-semibold uppercase text-zinc-500">
           Search
         </span>
       </button>
