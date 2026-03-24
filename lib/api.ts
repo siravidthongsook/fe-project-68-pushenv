@@ -227,6 +227,18 @@ export async function getCompanies(token?: string | null) {
 }
 
 /**
+ * Fetch all registered users.
+ * @throws {ApiError} if the token is invalid or the caller is not an admin
+ */
+export async function getUsers(token: string) {
+  const payload = await request<{ success: boolean; count: number; data: Record<string, unknown>[] }>(
+    '/api/v1/users',
+    { token },
+  );
+  return payload.data.map((user) => normalizeUser(user));
+}
+
+/**
  * Fetch a single company by ID including its interview bookings.
  * @throws {ApiError} if company not found
  */
@@ -322,13 +334,21 @@ export async function getInterview(token: string, id: string) {
  * Book interview slots at multiple companies in one request.
  * @throws {ApiError} if booking limit would be exceeded
  */
-export async function createInterview(token: string, companyId: string, date: string) {
+export async function createInterview(
+  token: string,
+  companyId: string,
+  date: string,
+  userId?: string,
+) {
   const payload = await request<ApiEnvelope<Record<string, unknown>>>(
     `/api/v1/companies/${companyId}/interviews`,
     {
       method: 'POST',
       token,
-      body: { date },
+      body: {
+        date,
+        ...(userId ? { userId } : {}),
+      },
     },
   );
   return normalizeInterview(extractData(payload));
@@ -338,13 +358,22 @@ export async function createInterview(token: string, companyId: string, date: st
  * Reschedule an existing interview to a new date.
  * @throws {ApiError} if interview not found or unauthorized
  */
-export async function createBulkInterviews(token: string, companyIds: string[], date: string) {
+export async function createBulkInterviews(
+  token: string,
+  companyIds: string[],
+  date: string,
+  userId?: string,
+) {
   const payload = await request<{ success: boolean; count: number; data: Record<string, unknown>[] }>(
     '/api/v1/interviews/bulk',
     {
       method: 'POST',
       token,
-      body: { companyIds, date },
+      body: {
+        companyIds,
+        date,
+        ...(userId ? { userId } : {}),
+      },
     },
   );
   return payload.data.map((interview) => normalizeInterview(interview));

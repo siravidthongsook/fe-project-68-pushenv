@@ -27,6 +27,9 @@ import { cn, interviewCompanyName } from '@/lib/utils';
 import { useAsync } from '@/hooks/use-async';
 import { Alert } from '@/components/alert';
 
+const EMPTY_COMPANIES: Company[] = [];
+const EMPTY_INTERVIEWS: Interview[] = [];
+
 export function DashboardPage() {
   const { user, token, refresh } = useAuth();
   const [bulkDate, setBulkDate] = useState<string>(interviewOptions[0].value);
@@ -46,8 +49,8 @@ export function DashboardPage() {
     return { companies, interviews };
   }, [token]);
 
-  const companies = data?.companies ?? [];
-  const interviews = data?.interviews ?? [];
+  const companies = data?.companies ?? EMPTY_COMPANIES;
+  const interviews = data?.interviews ?? EMPTY_INTERVIEWS;
 
   const bookedCompanyIds = useMemo(
     () => new Set(interviews.map((interview) => interview.company.id)),

@@ -178,9 +178,11 @@ export function Checkbox({
 export function Badge({
   children,
   tone = 'neutral',
+  className,
 }: {
   children: React.ReactNode;
   tone?: 'neutral' | 'accent' | 'warm' | 'success' | 'danger';
+  className?: string;
 }) {
   const tones: Record<string, string> = {
     neutral: 'border border-zinc-200 bg-white text-zinc-700',
@@ -190,7 +192,11 @@ export function Badge({
     danger: 'border border-zinc-200 bg-white text-zinc-900',
   };
 
-  return <span className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold', tones[tone])}>{children}</span>;
+  return (
+    <span className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold', tones[tone], className)}>
+      {children}
+    </span>
+  );
 }
 
 export function Field({

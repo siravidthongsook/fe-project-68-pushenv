@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import {
   AnchorButton,
@@ -17,15 +17,17 @@ import {
 } from '@/components/shadcn-ui';
 import {
   createCompany,
+  createInterview,
   deleteCompany,
   deleteInterview,
   getCompanies,
   getInterviews,
+  getUsers,
   updateCompany,
   updateInterview,
 } from '@/lib/api';
 import { formatDate, interviewOptions } from '@/lib/date';
-import type { Company, Interview } from '@/lib/types';
+import type { Company, Interview, User } from '@/lib/types';
 import { cn, interviewCompanyName } from '@/lib/utils';
 import { useAsync } from '@/hooks/use-async';
 import { Alert } from '@/components/alert';
@@ -47,6 +49,19 @@ const emptyCompanyForm: CompanyForm = {
   tel: '',
 };
 
+const EMPTY_COMPANIES: Company[] = [];
+const EMPTY_INTERVIEWS: Interview[] = [];
+const EMPTY_USERS: User[] = [];
+
+function formatUserOption(user: User) {
+  const roleLabel = user.role === 'admin' ? 'แอดมิน' : 'ผู้ใช้';
+  return `${user.name || user.email} • ${user.email} • ${roleLabel}`;
+}
+
+function formatCompanyOption(company: Company) {
+  return `${company.name} • ${company.address}`;
+}
+
 export function AdminPage() {
   const { token, refresh } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -54,22 +69,56 @@ export function AdminPage() {
   const [companyForm, setCompanyForm] = useState<CompanyForm>(emptyCompanyForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
-const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].value);
+  const [editInterviewDate, setEditInterviewDate] = useState<string>(interviewOptions[0].value);
+  const [bookingUserId, setBookingUserId] = useState('');
+  const [bookingCompanyId, setBookingCompanyId] = useState('');
+  const [bookingDate, setBookingDate] = useState<string>(interviewOptions[0].value);
 
   const { data, loading, error, reload } = useAsync(async () => {
     if (!token) return null;
-    const [companies, interviews] = await Promise.all([
+
+    const [companies, interviews, users] = await Promise.all([
       getCompanies(token),
       getInterviews(token),
+      getUsers(token),
     ]);
-    return { companies, interviews };
+
+    return { companies, interviews, users };
   }, [token]);
 
-  const companies = data?.companies ?? [];
-  const interviews = data?.interviews ?? [];
+  const companies = data?.companies ?? EMPTY_COMPANIES;
+  const interviews = data?.interviews ?? EMPTY_INTERVIEWS;
+  const users = data?.users ?? EMPTY_USERS;
+
+  useEffect(() => {
+    if (users.length === 0) {
+      if (bookingUserId) {
+        setBookingUserId('');
+      }
+      return;
+    }
+
+    if (!users.some((user) => user.id === bookingUserId)) {
+      setBookingUserId(users[0].id);
+    }
+  }, [bookingUserId, users]);
+
+  useEffect(() => {
+    if (companies.length === 0) {
+      if (bookingCompanyId) {
+        setBookingCompanyId('');
+      }
+      return;
+    }
+
+    if (!companies.some((company) => company.id === bookingCompanyId)) {
+      setBookingCompanyId(companies[0].id);
+    }
+  }, [bookingCompanyId, companies]);
 
   const companyStats = companies.length.toString();
   const interviewStats = interviews.length.toString();
+  const userStats = users.length.toString();
 
   const saveCompany = async () => {
     if (!token) {
@@ -140,15 +189,34 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
     if (!token || !selectedInterview) {
       return;
     }
+
     setBusy(true);
     setMessage(null);
     try {
-      await updateInterview(token, selectedInterview.id, interviewDate);
+      await updateInterview(token, selectedInterview.id, editInterviewDate);
       setMessage({ text: 'อัปเดตรอบสัมภาษณ์แล้ว', tone: 'success' });
       setSelectedInterview(null);
       await reload();
     } catch (err) {
       setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถอัปเดตรอบสัมภาษณ์ได้', tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createBooking = async () => {
+    if (!token || !bookingUserId || !bookingCompanyId) {
+      return;
+    }
+
+    setBusy(true);
+    setMessage(null);
+    try {
+      await createInterview(token, bookingCompanyId, bookingDate, bookingUserId);
+      setMessage({ text: 'สร้างการจองให้ผู้ใช้แล้ว', tone: 'success' });
+      await reload();
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : 'ไม่สามารถสร้างการจองได้', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -199,16 +267,22 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
       <div className="space-y-8">
         <div className="space-y-4 text-black">
           <p className="eyebrow">แดชบอร์ดแอดมิน</p>
-          <h1 className="font-display text-4xl">จัดการบริษัทและรอบสัมภาษณ์</h1>
+          <h1 className="font-display text-4xl">จัดการบริษัทและทุกการจอง</h1>
           <p className="max-w-3xl text-sm leading-6">
-            หน้านี้ใช้จัดการข้อมูลบริษัทและรอบสัมภาษณ์ทั้งหมด
+            หน้านี้ใช้แก้ไขบริษัท ตรวจสอบการจองทั้งหมด และสร้างการจองให้ผู้ใช้คนใดก็ได้
           </p>
         </div>
 
+        {message ? (
+          <div className="max-w-3xl">
+            <Alert message={message.text} tone={message.tone} />
+          </div>
+        ) : null}
+
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="บริษัท" value={companyStats} note="รายการที่ระบบส่งกลับมา" />
-          <StatCard label="การจอง" value={interviewStats} note="รายการที่เห็นได้ในเซสชันปัจจุบัน" />
-          <StatCard label="บทบาท" value="ผู้ดูแลระบบ" note="เส้นทางนี้ใช้ได้เฉพาะแอดมิน" />
+          <StatCard label="การจอง" value={interviewStats} note="การจองทั้งหมดในระบบ" />
+          <StatCard label="ผู้ใช้" value={userStats} note="บัญชีที่เลือกทำการจองได้" />
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
@@ -234,13 +308,7 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
               ) : null}
             </div>
 
-            {message ? (
-              <div className="rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-900">
-                {message ? <Alert message={message.text} tone={message.tone} /> : null}
-              </div>
-            ) : null}
-
-            <div className="space-y-4 flex flex-col gap-1">
+            <div className="space-y-4">
               <Field label="ชื่อบริษัท">
                 <Input
                   value={companyForm.name}
@@ -288,6 +356,73 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
           </Panel>
 
           <div className="space-y-8">
+            <Panel className="space-y-4 p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow">สร้างการจอง</p>
+                  <h2 className="mt-2 font-display text-2xl text-ink-900">จองแทนผู้ใช้</h2>
+                </div>
+                <Badge tone="accent">{bookingUserId && bookingCompanyId ? 'พร้อมใช้งาน' : 'รอข้อมูล'}</Badge>
+              </div>
+
+              {users.length === 0 || companies.length === 0 ? (
+                <EmptyState
+                  title="ยังไม่พร้อมสร้างการจอง"
+                  description={
+                    users.length === 0
+                      ? 'ยังไม่มีรายชื่อผู้ใช้ให้เลือก'
+                      : 'ยังไม่มีรายชื่อบริษัทให้เลือก'
+                  }
+                />
+              ) : (
+                <div className="space-y-4">
+                  <Field label="ผู้ใช้">
+                    <Select
+                      value={bookingUserId}
+                      onChange={(event) => setBookingUserId(event.target.value)}
+                    >
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {formatUserOption(user)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <Field label="บริษัท">
+                    <Select
+                      value={bookingCompanyId}
+                      onChange={(event) => setBookingCompanyId(event.target.value)}
+                    >
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {formatCompanyOption(company)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <Field label="วันที่สัมภาษณ์">
+                    <Select value={bookingDate} onChange={(event) => setBookingDate(event.target.value)}>
+                      {interviewOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+
+                  <Button
+                    onClick={() => void createBooking()}
+                    disabled={busy || !bookingUserId || !bookingCompanyId}
+                    className="w-full"
+                  >
+                    {busy ? 'กำลังสร้าง...' : 'สร้างการจอง'}
+                  </Button>
+                </div>
+              )}
+            </Panel>
+
             <Panel className="space-y-4 p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -344,14 +479,18 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
                       <p className="text-sm font-semibold text-ink-900">แก้ไขรอบสัมภาษณ์</p>
                       <p className="text-xs text-ink-600">{interviewCompanyName(selectedInterview)}</p>
                     </div>
-                    <button type="button" className="text-sm font-semibold text-ink-600" onClick={() => setSelectedInterview(null)}>
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-ink-600"
+                      onClick={() => setSelectedInterview(null)}
+                    >
                       ยกเลิก
                     </button>
                   </div>
                   <Field label="วันที่สัมภาษณ์">
                     <Select
-                      value={interviewDate}
-                      onChange={(event) => setInterviewDate(event.target.value)}
+                      value={editInterviewDate}
+                      onChange={(event) => setEditInterviewDate(event.target.value)}
                     >
                       {interviewOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -373,11 +512,12 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
                   {interviews.map((interview) => (
                     <div key={interview.id} className="rounded-2xl border border-ink-200 bg-white p-4">
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
+                        <div className="space-y-1">
                           <p className="font-medium text-ink-900">{interviewCompanyName(interview)}</p>
                           <p className="text-sm text-ink-500">{formatDate(interview.date)}</p>
-                          <p className="mt-1 text-xs font-medium text-ink-400">
-                            {interview.user.email}
+                          <p className="text-xs font-medium text-ink-400">
+                            จองโดย {interview.user.name || interview.user.email}
+                            {interview.user.email ? ` • ${interview.user.email}` : ''}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -386,7 +526,7 @@ const [interviewDate, setInterviewDate] = useState<string>(interviewOptions[0].v
                             variant="outline"
                             onClick={() => {
                               setSelectedInterview(interview);
-                              setInterviewDate(new Date(interview.date).toISOString());
+                              setEditInterviewDate(new Date(interview.date).toISOString());
                             }}
                           >
                             แก้ไข
