@@ -249,45 +249,55 @@ export function AdminManagePage() {
             </div>
 
             <div className="space-y-4">
-              <Field label="ชื่อบริษัท">
-                <Input
+                <div>
+                <Field label="ชื่อบริษัท">
+                  <Input
                   value={companyForm.name}
                   onChange={(event) => setCompanyForm({ ...companyForm, name: event.target.value })}
                   placeholder="บริษัทตัวอย่าง"
                   required
-                />
-              </Field>
-              <Field label="ที่อยู่">
-                <Input
+                  />
+                </Field>
+                </div>
+                <div>
+                <Field label="ที่อยู่">
+                  <Input
                   value={companyForm.address}
                   onChange={(event) => setCompanyForm({ ...companyForm, address: event.target.value })}
                   placeholder="กรุงเทพมหานคร"
                   required
-                />
-              </Field>
-              <Field label="เว็บไซต์">
-                <Input
+                  />
+                </Field>
+                </div>
+                <div>
+                <Field label="เว็บไซต์">
+                  <Input
                   value={companyForm.website}
                   onChange={(event) => setCompanyForm({ ...companyForm, website: event.target.value })}
                   placeholder="https://example.com"
-                />
-              </Field>
-              <Field label="เบอร์โทรศัพท์">
-                <Input
+                  />
+                </Field>
+                </div>
+                <div>
+                <Field label="เบอร์โทรศัพท์">
+                  <Input
                   value={companyForm.tel}
                   onChange={(event) => setCompanyForm({ ...companyForm, tel: event.target.value })}
                   placeholder="021234567"
                   required
-                />
-              </Field>
-              <Field label="รายละเอียด">
-                <Textarea
+                  />
+                </Field>
+                </div>
+                <div>
+                <Field label="รายละเอียด">
+                  <Textarea
                   value={companyForm.description}
                   onChange={(event) => setCompanyForm({ ...companyForm, description: event.target.value })}
                   placeholder="บริษัทนี้ทำอะไร"
                   required
-                />
-              </Field>
+                  />
+                </Field>
+                </div>
             </div>
 
             <Button className="w-full" onClick={() => void saveCompany()} disabled={busy}>

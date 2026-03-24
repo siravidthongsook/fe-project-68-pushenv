@@ -871,41 +871,51 @@ function CompaniesSection({
         {notice && mode ? <Alert message={notice.text} tone={notice.tone} /> : null}
 
         <div className="space-y-5">
-          <Field label="ชื่อบริษัท">
-            <Input
+            <div>
+            <Field label="ชื่อบริษัท">
+              <Input
               value={form.name}
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
               placeholder="บริษัทตัวอย่าง จำกัด"
-            />
-          </Field>
-          <Field label="ที่อยู่">
-            <Input
+              />
+            </Field>
+            </div>
+            <div>
+            <Field label="ที่อยู่">
+              <Input
               value={form.address}
               onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
               placeholder="กรุงเทพมหานคร"
-            />
-          </Field>
-          <Field label="เว็บไซต์">
-            <Input
+              />
+            </Field>
+            </div>
+            <div>
+            <Field label="เว็บไซต์">
+              <Input
               value={form.website}
               onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))}
               placeholder="https://example.com"
-            />
-          </Field>
-          <Field label="เบอร์โทร">
-            <Input
+              />
+            </Field>
+            </div>
+            <div>
+            <Field label="เบอร์โทร">
+              <Input
               value={form.tel}
               onChange={(event) => setForm((current) => ({ ...current, tel: event.target.value }))}
               placeholder="021234567"
-            />
-          </Field>
-          <Field label="รายละเอียด">
-            <Textarea
+              />
+            </Field>
+            </div>
+            <div>
+            <Field label="รายละเอียด">
+              <Textarea
               value={form.description}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
               placeholder="เล่าภาพรวมบริษัทให้ผู้สมัครเข้าใจอย่างรวดเร็ว"
-            />
-          </Field>
+              />
+            </Field>
+            </div>
           <Button
             type="button"
             className="w-full"
