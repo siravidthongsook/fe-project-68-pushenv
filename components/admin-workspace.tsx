@@ -444,9 +444,9 @@ function BookingsSection({
                 <p className="font-medium text-ink-900">{userDisplayName(interview.user)}</p>
                 <p className="mt-1 text-xs text-ink-500">{interview.user.email}</p>
               </td>
-              <td className="px-4 py-4 text-sm text-ink-700">{formatDateTime(interview.date)}</td>
+              <td className="px-4 py-4 text-sm text-ink-700">{formatDate(interview.date)}</td>
               <td className="px-4 py-4 text-sm text-ink-700">
-                {interview.createdAt ? formatDateTime(interview.createdAt) : 'ไม่มีข้อมูล'}
+                {interview.createdAt ? formatDate(interview.createdAt) : 'ไม่มีข้อมูล'}
               </td>
               <td className="px-4 py-4">
                 <div className="flex flex-wrap gap-2">
@@ -522,9 +522,9 @@ function BookingsSection({
                       <p className="font-medium text-ink-900">{interview.company.name}</p>
                       <p className="mt-1 text-xs text-ink-500">{interview.company.address}</p>
                     </td>
-                    <td className="px-4 py-4 text-sm text-ink-700">{formatDateTime(interview.date)}</td>
+                    <td className="px-4 py-4 text-sm text-ink-700">{formatDate(interview.date)}</td>
                     <td className="px-4 py-4 text-sm text-ink-700">
-                      {interview.createdAt ? formatDateTime(interview.createdAt) : 'ไม่มีข้อมูล'}
+                      {interview.createdAt ? formatDate(interview.createdAt) : 'ไม่มีข้อมูล'}
                     </td>
                   </tr>
                 ))}
@@ -1144,9 +1144,9 @@ function UsersSection({
                       <p className="font-medium text-ink-900">{interview.company.name}</p>
                       <p className="mt-1 text-xs text-ink-500">{interview.company.address}</p>
                     </td>
-                    <td className="px-4 py-4 text-sm text-ink-700">{formatDateTime(interview.date)}</td>
+                    <td className="px-4 py-4 text-sm text-ink-700">{formatDate(interview.date)}</td>
                     <td className="px-4 py-4 text-sm text-ink-700">
-                      {interview.createdAt ? formatDateTime(interview.createdAt) : 'ไม่มีข้อมูล'}
+                      {interview.createdAt ? formatDate(interview.createdAt) : 'ไม่มีข้อมูล'}
                     </td>
                   </tr>
                 ))}
