@@ -5,29 +5,12 @@ const displayDate = new Intl.DateTimeFormat('th-TH', {
   timeZone: 'UTC',
 });
 
-const displayDateTime = new Intl.DateTimeFormat('th-TH', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'UTC',
-});
-
 export function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
   return displayDate.format(date);
-}
-
-export function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return displayDateTime.format(date);
 }
 
 export { INTERVIEW_DATES as interviewOptions } from '@/lib/constants';

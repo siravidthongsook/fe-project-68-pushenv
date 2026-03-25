@@ -33,7 +33,7 @@ import {
   updateInterview,
   updateUser,
 } from '@/lib/api';
-import { formatDate, formatDateTime } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 import type { BookingSlot, Company, Interview, Role, User } from '@/lib/types';
 import { useAsync } from '@/hooks/use-async';
 import { cn, interviewCompanyName } from '@/lib/utils';
@@ -641,8 +641,8 @@ function BookingsSection({
                 </p>
               </div>
               <div className="rounded-2xl border border-zinc-200 p-4">
-                <p className="text-xs font-semibold uppercase text-zinc-500">เวลาปัจจุบัน</p>
-                <p className="mt-2 text-sm text-ink-900">{formatDateTime(selectedInterview.date)}</p>
+                <p className="text-xs font-semibold uppercase text-zinc-500">วันที่ปัจจุบัน</p>
+                <p className="mt-2 text-sm text-ink-900">{formatDate(selectedInterview.date)}</p>
               </div>
             </Panel>
             <Field label="ช่วงเวลาใหม่">

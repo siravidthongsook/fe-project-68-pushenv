@@ -28,7 +28,7 @@ import {
   getInterviewSlots,
   updateInterview,
 } from '@/lib/api';
-import { formatDate, formatDateTime, interviewOptions } from '@/lib/date';
+import { formatDate, interviewOptions } from '@/lib/date';
 import type { BookingSlot, Company, Interview } from '@/lib/types';
 import { useAsync } from '@/hooks/use-async';
 import { cn, interviewCompanyName } from '@/lib/utils';
@@ -259,7 +259,7 @@ function OverviewSection({
         : nextUpcomingInterview
           ? {
               title: `รอบถัดไปกับ ${interviewCompanyName(nextUpcomingInterview)}`,
-              description: `เตรียมตัวสำหรับ ${formatDateTime(nextUpcomingInterview.date)} และใช้สิทธิ์ที่เหลืออย่างระมัดระวัง`,
+              description: `เตรียมตัวสำหรับ ${formatDate(nextUpcomingInterview.date)} และใช้สิทธิ์ที่เหลืออย่างระมัดระวัง`,
             }
           : {
               title: 'ยังจองเพิ่มได้',
@@ -737,7 +737,7 @@ function MyBookingsSection({
                   </div>
                   <p className="text-sm text-ink-500">{interview.company.address}</p>
                   <p className="text-xs text-ink-500">
-                    สร้างเมื่อ {interview.createdAt ? formatDateTime(interview.createdAt) : 'ไม่มีข้อมูล'}
+                    สร้างเมื่อ {interview.createdAt ? formatDate(interview.createdAt) : 'ไม่มีข้อมูล'}
                   </p>
                 </div>
 
@@ -1106,8 +1106,8 @@ export function DashboardPage() {
                 <p className="mt-1 text-sm text-ink-500">{editingInterview.company.address}</p>
               </div>
               <div className="rounded-2xl border border-zinc-200 p-4">
-                <p className="text-xs font-semibold uppercase text-zinc-500">เวลาปัจจุบัน</p>
-                <p className="mt-2 text-sm text-ink-900">{formatDateTime(editingInterview.date)}</p>
+                <p className="text-xs font-semibold uppercase text-zinc-500">วันที่ปัจจุบัน</p>
+                <p className="mt-2 text-sm text-ink-900">{formatDate(editingInterview.date)}</p>
               </div>
             </Panel>
             <div>
